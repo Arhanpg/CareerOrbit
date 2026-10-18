@@ -1,0 +1,22 @@
+# Nebius Serverless Jobs / Daemon Container Manifest
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    typst \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt* ./
+RUN pip install --no-cache-dir \
+    fastapi uvicorn pydantic pydantic-settings \
+    "rendercv[full]" pypdf python-jobspy tavily-python APScheduler \
+    pyjwt playwright \
+    && playwright install --with-deps chromium
+
+COPY . .
+
+# Run continuous 24/7 opportunity discovery daemon
+CMD ["python", "-c", "from backend.discovery.coordinator import start_discovery_scheduler; import time; start_discovery_scheduler(); print('24/7 Hunter Daemon running...'); [time.sleep(3600) for _ in iter(int, 1)]"]

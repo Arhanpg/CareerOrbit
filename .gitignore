@@ -35,3 +35,4 @@ extracted_plan.txt
 build_test*/
 test_fail.yaml
 test_fallback.yaml
+*.docx

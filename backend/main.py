@@ -49,6 +49,8 @@ app.include_router(resumes_router)
 app.include_router(applications_router)
 app.include_router(mock_portal_router)
 app.include_router(calendar_router)
+from backend.api.sandbox import router as sandbox_router
+app.include_router(sandbox_router)
 
 @app.get("/")
 def root():
