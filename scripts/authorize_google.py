@@ -27,13 +27,24 @@ def authorize_google(test_mode: bool = False):
     Executes OAuth2 flow using credentials.json and saves google_token.json.
     """
     settings.STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-    credentials_path = settings.BACKEND_DIR / "credentials.json"
-    token_path = settings.STORAGE_DIR / "google_token.json"
+    # Search possible credential paths
+    candidates = [
+        settings.BACKEND_DIR / "credentials.json",
+        ROOT_DIR / "credentials.json",
+        ROOT_DIR / "credentials.json.json",
+        settings.BACKEND_DIR / "credentials.json.json",
+        settings.STORAGE_DIR / "credentials.json",
+    ]
+    credentials_path = None
+    for cand in candidates:
+        if cand.exists():
+            credentials_path = cand
+            break
 
     print("\n" + "=" * 65)
     print("  CareerClaw: Gmail & Google Calendar Authorization")
     print("=" * 65)
-    print(f"Credentials File: {credentials_path}")
+    print(f"Credentials File: {credentials_path or 'NOT FOUND'}")
     print(f"Target Token:     {token_path}")
     print("=" * 65 + "\n")
 
@@ -53,13 +64,13 @@ def authorize_google(test_mode: bool = False):
         print(f"[SUCCESS] Test token written to {token_path}")
         return str(token_path)
 
-    if not credentials_path.exists():
-        print("[ERROR] backend/credentials.json not found!")
+    if not credentials_path:
+        print("[ERROR] Google OAuth credentials.json not found in root or backend/!")
         print("Steps to obtain credentials:")
         print(" 1. Go to Google Cloud Console (https://console.cloud.google.com).")
         print(" 2. Enable 'Gmail API' and 'Google Calendar API'.")
         print(" 3. Go to 'Credentials' -> 'Create Credentials' -> 'OAuth client ID' (Desktop App).")
-        print(f" 4. Download JSON and place at: {credentials_path}")
+        print(f" 4. Download JSON and place at: {settings.BACKEND_DIR / 'credentials.json'} or project root.")
         return None
 
     try:

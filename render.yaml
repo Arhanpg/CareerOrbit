@@ -1,0 +1,26 @@
+# Render Blueprint Specification for CareerClaw Backend
+# 100% Free Tier Web Service Deployment on render.com
+services:
+  - type: web
+    name: careerorbit-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: NEBIUS_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: SMTP_EMAIL
+        sync: false
+      - key: SMTP_APP_PASSWORD
+        sync: false
+      - key: CANDIDATE_EMAIL
+        sync: false

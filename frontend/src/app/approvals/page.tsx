@@ -19,6 +19,7 @@ import {
   X,
   MessageSquare
 } from "lucide-react";
+import { API_BASE_URL, getApiUrl } from "@/lib/api";
 
 interface Application {
   id: string;
@@ -47,7 +48,7 @@ export default function ApprovalsPage() {
   // Fetch applications
   const fetchApplications = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/applications");
+      const res = await fetch(getApiUrl("/api/v1/applications"));
       if (res.ok) {
         const data = await res.json();
         setApplications(data.applications || []);
@@ -73,13 +74,13 @@ export default function ApprovalsPage() {
     setActionLoading(true);
     setStatusMessage("Browser Agent staging Adobe AI/ML application...");
     try {
-      const res = await fetch("http://localhost:8000/api/v1/applications/stage", {
+      const res = await fetch(getApiUrl("/api/v1/applications/stage"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           company: "Adobe Systems India",
           role_title: "AI/ML Software Engineering Intern (2028 Cohort)",
-          portal_url: "http://localhost:8000/mock-portals/adobe-aiml-intern-2028"
+          portal_url: getApiUrl("/mock-portals/adobe-aiml-intern-2028")
         })
       });
       if (res.ok) {
@@ -100,7 +101,7 @@ export default function ApprovalsPage() {
     setStatusMessage("Replaying browser actions & clicking final Submit...");
     try {
       // Create and invoke approve token
-      const tokenRes = await fetch(`http://localhost:8000/api/v1/hitl/decide?token=mock_or_direct`, {
+      const tokenRes = await fetch(getApiUrl("/api/v1/hitl/decide?token=mock_or_direct"), {
         method: "GET"
       });
       // Or call stage endpoint directly
@@ -120,7 +121,7 @@ export default function ApprovalsPage() {
     setActionLoading(true);
     setStatusMessage("Updating Mem0, re-compiling RenderCV PDF & re-staging form...");
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/applications/${selectedApp.id}/improve`, {
+      const res = await fetch(getApiUrl(`/api/v1/applications/${selectedApp.id}/improve`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedback_text: improveText })
@@ -332,7 +333,7 @@ export default function ApprovalsPage() {
                       Pre-Filled Form Verification Screenshot
                     </span>
                     <a
-                      href={`http://localhost:8000/api/v1/applications/${selectedApp.id}/screenshot`}
+                      href={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/screenshot`}
                       target="_blank"
                       rel="noreferrer"
                       className="text-xs text-[#0071E3] hover:underline flex items-center gap-1"
@@ -343,7 +344,7 @@ export default function ApprovalsPage() {
 
                   <div className="rounded-xl overflow-hidden border border-black/[0.08] bg-[#F5F5F7] max-h-72 flex items-center justify-center">
                     <img
-                      src={`http://localhost:8000/api/v1/applications/${selectedApp.id}/screenshot`}
+                      src={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/screenshot`}
                       alt="Staged Application Screenshot"
                       className="w-full object-cover object-top hover:scale-105 transition-transform duration-300"
                       onError={(e) => {

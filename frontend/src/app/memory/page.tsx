@@ -15,6 +15,7 @@ import {
   Check,
   AlertCircle
 } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 export default function MemoryVaultPage() {
   // Constraints form state
@@ -51,7 +52,7 @@ export default function MemoryVaultPage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/profile/constraints");
+      const res = await fetch(getApiUrl("/api/v1/profile/constraints"));
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
@@ -63,7 +64,7 @@ export default function MemoryVaultPage() {
 
   const fetchMemories = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/memory/all");
+      const res = await fetch(getApiUrl("/api/v1/memory/all"));
       if (res.ok) {
         const data = await res.json();
         setMemories(data.memories || []);
@@ -77,7 +78,7 @@ export default function MemoryVaultPage() {
     e.preventDefault();
     setIsSavingConstraints(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/profile/constraints", {
+      const res = await fetch(getApiUrl("/api/v1/profile/constraints"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile)
@@ -103,7 +104,7 @@ export default function MemoryVaultPage() {
     formData.append("user_id", "default_user");
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/memory/upload-files", {
+      const res = await fetch(getApiUrl("/api/v1/memory/upload-files"), {
         method: "POST",
         body: formData
       });
@@ -124,7 +125,7 @@ export default function MemoryVaultPage() {
     e.preventDefault();
     if (!chatInput.trim()) return;
     try {
-      const res = await fetch("http://localhost:8000/api/v1/memory/chat-update", {
+      const res = await fetch(getApiUrl("/api/v1/memory/chat-update"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: chatInput, user_id: "default_user" })

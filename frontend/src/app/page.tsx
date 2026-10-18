@@ -19,6 +19,8 @@ import {
   CheckCircle
 } from "lucide-react";
 
+import { API_BASE_URL } from "@/lib/api";
+
 export default function OverviewPage() {
   const [profile, setProfile] = useState<any>(null);
   const [health, setHealth] = useState<any>(null);
@@ -28,8 +30,8 @@ export default function OverviewPage() {
     async function loadData() {
       try {
         const [profileRes, healthRes] = await Promise.all([
-          fetch("http://localhost:8000/api/v1/profile/constraints").catch(() => null),
-          fetch("http://localhost:8000/health").catch(() => null)
+          fetch(`${API_BASE_URL}/api/v1/profile/constraints`).catch(() => null),
+          fetch(`${API_BASE_URL}/health`).catch(() => null)
         ]);
 
         if (profileRes && profileRes.ok) {

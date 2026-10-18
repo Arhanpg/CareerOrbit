@@ -18,6 +18,7 @@ import {
   Clock,
   Check
 } from "lucide-react";
+import { API_BASE_URL, getApiUrl } from "@/lib/api";
 
 interface TelemetryItem {
   stage: number;
@@ -50,7 +51,7 @@ export default function Navigation() {
     setErrorMsg(null);
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/sandbox/run-60s-loop", {
+      const res = await fetch(getApiUrl("/api/v1/sandbox/run-60s-loop"), {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -256,7 +257,7 @@ export default function Navigation() {
                 <div className="flex flex-wrap gap-2 pt-1">
                   {loopResult.pdf_download_url && (
                     <a
-                      href={`http://localhost:8000${loopResult.pdf_download_url}`}
+                      href={`${API_BASE_URL}${loopResult.pdf_download_url}`}
                       target="_blank"
                       rel="noreferrer"
                       className="px-3.5 py-1.5 rounded-full bg-white text-[#0071E3] text-xs font-semibold border border-black/[0.06] flex items-center gap-1.5 shadow-sm"
@@ -267,7 +268,7 @@ export default function Navigation() {
 
                   {loopResult.screenshot_url && (
                     <a
-                      href={`http://localhost:8000${loopResult.screenshot_url}`}
+                      href={`${API_BASE_URL}${loopResult.screenshot_url}`}
                       target="_blank"
                       rel="noreferrer"
                       className="px-3.5 py-1.5 rounded-full bg-white text-[#1D1D1F] text-xs font-semibold border border-black/[0.06] flex items-center gap-1.5 shadow-sm"

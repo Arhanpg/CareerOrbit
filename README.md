@@ -126,6 +126,41 @@ uvicorn backend.main:app --reload --port 8000
 
 ---
 
+## 🚀 Cloud Deployment Guide (100% Free Tier: Render + Vercel)
+
+### Option A: Backend on Render (100% Free Tier Web Service)
+1. Sign up / Log in to [render.com](https://render.com) (No credit card required).
+2. Click **New +** $\rightarrow$ **Web Service** (or **Blueprint** with `render.yaml`).
+3. Connect your GitHub repository: `https://github.com/Arhanpg/CareerOrbit`.
+4. Configure service:
+   - **Name**: `careerorbit-backend`
+   - **Environment**: `Docker` (or `Python 3`)
+   - **Dockerfile Path**: `Dockerfile` (or build command `pip install -r backend/requirements.txt` / start command `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`)
+   - **Plan**: `Free`
+5. Under **Environment Variables**, add:
+   - `NEBIUS_API_KEY`: Your Nebius Token Factory API key
+   - `NEBIUS_BASE_URL`: `https://api.tokenfactory.nebius.com/v1`
+   - `TAVILY_API_KEY`: Your Tavily search API key
+   - `HITL_JWT_SECRET`: Any random 32-character string
+   - `SMTP_EMAIL`: Your Gmail address
+   - `SMTP_APP_PASSWORD`: Your 16-character Google App Password
+6. Click **Deploy Web Service**.
+7. Once deployed, Render gives you a public URL (e.g. `https://careerorbit-backend.onrender.com`).
+   - Test: `https://careerorbit-backend.onrender.com/health` returns `{"status":"ok"}`.
+
+### Option B: Frontend on Vercel
+1. Log in to [vercel.com](https://vercel.com) and click **Add New Project**.
+2. Import `Arhanpg/CareerOrbit`.
+3. In Project Settings:
+   - **Root Directory**: `frontend`
+   - **Framework Preset**: Next.js (automatically detected)
+4. Under **Environment Variables**, add:
+   - `NEXT_PUBLIC_API_URL`: Your Render backend URL (e.g., `https://careerorbit-backend.onrender.com`).
+5. Click **Deploy**.
+6. Vercel generates your live frontend URL (e.g., `https://careerorbit.vercel.app`).
+
+---
+
 ## ⚡ 60-Second Judge Sandbox Mode (Zero-Key & Zero-CAPTCHA)
 
 For Devpost hackathon judges evaluating submissions rapidly:

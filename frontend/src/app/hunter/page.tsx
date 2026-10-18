@@ -17,6 +17,7 @@ import {
   Layers,
   ChevronRight
 } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 export default function LiveHunterPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -33,7 +34,7 @@ export default function LiveHunterPage() {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/hunter/jobs?only_eligible=true");
+      const res = await fetch(getApiUrl("/api/v1/hunter/jobs?only_eligible=true"));
       if (res.ok) {
         const data = await res.json();
         setJobs(data.jobs || []);
@@ -51,7 +52,7 @@ export default function LiveHunterPage() {
   const handleRunNow = async () => {
     setIsHunting(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/hunter/run-now", {
+      const res = await fetch(getApiUrl("/api/v1/hunter/run-now"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role_query: "AI ML Software Engineering Intern" })

@@ -25,6 +25,9 @@ backend/storage/
 *.sqlite
 *.db
 chrome_profile/
+credentials*.json
+google_token*.json
+token*.json
 
 # OS and IDE
 .DS_Store

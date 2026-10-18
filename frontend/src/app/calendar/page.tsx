@@ -18,6 +18,7 @@ import {
   Video,
   PhoneCall
 } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 interface CalendarEvent {
   id: string;
@@ -43,7 +44,7 @@ export default function CalendarPage() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/calendar/events");
+      const res = await fetch(getApiUrl("/api/v1/calendar/events"));
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events || []);
@@ -86,7 +87,7 @@ export default function CalendarPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/calendar/simulate-email", {
+      const res = await fetch(getApiUrl("/api/v1/calendar/simulate-email"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
