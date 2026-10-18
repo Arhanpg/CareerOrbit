@@ -3,11 +3,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies (typst, fonts, curl, git)
+# Install system dependencies (fonts, curl, git) - note typst is provided via python package
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
-    typst \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 

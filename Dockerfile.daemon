@@ -5,16 +5,14 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    typst \
+    git \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt* ./
-RUN pip install --no-cache-dir \
-    fastapi uvicorn pydantic pydantic-settings \
-    "rendercv[full]" pypdf python-jobspy tavily-python APScheduler \
-    pyjwt playwright \
-    && playwright install --with-deps chromium
+COPY backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    playwright install --with-deps chromium
 
 COPY . .
 
