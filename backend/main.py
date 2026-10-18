@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.database import init_db
 from backend.api.health import router as health_router
 from backend.api.profile import router as profile_router
+from backend.api.memory import router as memory_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("careerclaw.main")
@@ -35,6 +36,7 @@ app.add_middleware(
 # Register routes
 app.include_router(health_router)
 app.include_router(profile_router)
+app.include_router(memory_router)
 
 @app.get("/")
 def root():
