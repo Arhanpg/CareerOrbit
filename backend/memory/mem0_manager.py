@@ -134,11 +134,16 @@ class CareerMemoryManager:
         """Search memory for relevant projects, skills, and metrics."""
         if self._mem0:
             try:
-                results = self._mem0.search(query=query, user_id=user_id, limit=limit)
+                results = self._mem0.search(query=query, filters={"user_id": user_id}, limit=limit)
                 if results and len(results) > 0:
                     return results
-            except Exception as e:
-                logger.warning(f"Mem0 search failed: {e}. Falling back to semantic text ranking.")
+            except Exception:
+                try:
+                    results = self._mem0.search(query=query, user_id=user_id, limit=limit)
+                    if results and len(results) > 0:
+                        return results
+                except Exception as e:
+                    logger.warning(f"Mem0 search failed: {e}. Falling back to semantic text ranking.")
 
         # Local semantic ranking search
         self._ensure_fallback_table()
