@@ -6,6 +6,8 @@ from backend.database import init_db
 from backend.api.health import router as health_router
 from backend.api.profile import router as profile_router
 from backend.api.memory import router as memory_router
+from backend.api.hunter import router as hunter_router
+from backend.discovery.coordinator import start_discovery_scheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("careerclaw.main")
@@ -14,6 +16,7 @@ logger = logging.getLogger("careerclaw.main")
 async def lifespan(app: FastAPI):
     logger.info("Initializing CareerClaw database and services...")
     init_db()
+    start_discovery_scheduler()
     yield
     logger.info("CareerClaw backend shutting down.")
 
@@ -37,6 +40,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(profile_router)
 app.include_router(memory_router)
+app.include_router(hunter_router)
 
 @app.get("/")
 def root():

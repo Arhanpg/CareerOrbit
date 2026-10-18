@@ -16,11 +16,11 @@ class Settings:
     NEBIUS_BASE_URL: str = os.getenv("NEBIUS_BASE_URL", "https://api.tokenfactory.nebius.com/v1")
     
     # Tiered Nemotron 3 Models
-    TIER1_MODEL: str = os.getenv("TIER1_MODEL", "nebius/nvidia/Nemotron-3_5-Lightning")
-    TIER1_FALLBACK_MODEL: str = os.getenv("TIER1_FALLBACK_MODEL", "nebius/nvidia/Nemotron-3-Nano-30B-A3B")
-    TIER2_MODEL: str = os.getenv("TIER2_MODEL", "nebius/nvidia/nemotron-3-super-120b-a12b")
-    TIER3_MODEL: str = os.getenv("TIER3_MODEL", "nebius/nvidia/Nemotron-3-Ultra-550b-a55b")
-    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "nebius/Qwen/Qwen3-Embedding-8B")
+    TIER1_MODEL: str = os.getenv("TIER1_MODEL", "nvidia/Nemotron-3_5-Lightning")
+    TIER1_FALLBACK_MODEL: str = os.getenv("TIER1_FALLBACK_MODEL", "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B")
+    TIER2_MODEL: str = os.getenv("TIER2_MODEL", "nvidia/nemotron-3-super-120b-a12b")
+    TIER3_MODEL: str = os.getenv("TIER3_MODEL", "nvidia/Nemotron-3-Ultra-550b-a55b")
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-8B")
     
     # Tavily Search API
     TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")

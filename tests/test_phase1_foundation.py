@@ -1,3 +1,4 @@
+import json
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -15,9 +16,9 @@ def test_health_check_returns_200():
     assert data["status"] == "healthy"
     assert "nebius_token_factory" in data
     assert "models" in data
-    assert data["models"]["tier1_fast"] == "nebius/nvidia/Nemotron-3_5-Lightning"
-    assert data["models"]["tier2_browser"] == "nebius/nvidia/nemotron-3-super-120b-a12b"
-    assert data["models"]["tier3_ultra"] == "nebius/nvidia/Nemotron-3-Ultra-550b-a55b"
+    assert data["models"]["tier1_fast"] == "nvidia/Nemotron-3_5-Lightning"
+    assert data["models"]["tier2_browser"] == "nvidia/nemotron-3-super-120b-a12b"
+    assert data["models"]["tier3_ultra"] == "nvidia/Nemotron-3-Ultra-550b-a55b"
 
 def test_candidate_constraints_schema_valid():
     """Validate CandidateHardConstraints accepts valid B.Tech 2028 batch candidate."""
@@ -106,11 +107,13 @@ def test_llm_router_connectivity_and_routing():
 
     # Test Tier 1 Fast
     t1_res = llm_router.call_tier1_fast(
-        messages=[{"role": "user", "content": "Check eligibility for 2028 batch internship"}],
+        messages=[{"role": "user", "content": "Return a strict JSON object with key 'is_eligible': true"}],
         response_format={"type": "json_object"}
     )
     assert t1_res is not None
-    assert "is_eligible" in t1_res
+    parsed_json = json.loads(t1_res)
+    assert isinstance(parsed_json, dict)
+    assert "is_eligible" in parsed_json
 
     # Test Tier 2 Browser
     t2_res = llm_router.call_tier2_browser(
