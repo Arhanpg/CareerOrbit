@@ -1,0 +1,34 @@
+# Environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Config and Storage
+.env
+backend/.env
+storage/
+backend/storage/
+*.sqlite
+*.db
+chrome_profile/
+
+# OS and IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+extracted_plan.txt

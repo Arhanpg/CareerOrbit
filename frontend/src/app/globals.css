@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F5F5F7;
+  --foreground: #1D1D1F;
+  --card-bg: #FFFFFF;
+  --card-border: rgba(0, 0, 0, 0.06);
+  --accent-blue: #0071E3;
+  --accent-blue-hover: #0077ED;
+  --apple-gray-sub: #86868B;
+  --status-success-bg: #E8F8EE;
+  --status-success-ink: #1D8348;
+  --status-warning-bg: #FFF4E5;
+  --status-warning-ink: #B76E00;
+  --status-danger-bg: #FDEDEC;
+  --status-danger-ink: #C0392B;
+}
+
+body {
+  background-color: #F5F5F7;
+  color: #1D1D1F;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Apple squircle elevation & soft ambient shadow */
+.apple-card {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-card:hover {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* Translucent frosted glass bar */
+.apple-frosted {
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Apple segmented pill container */
+.apple-segmented-nav {
+  background-color: rgba(232, 232, 237, 0.7);
+  padding: 4px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Action pill button */
+.apple-button-primary {
+  background-color: #0071E3;
+  color: #FFFFFF;
+  border-radius: 9999px;
+  font-weight: 500;
+  padding: 8px 18px;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apple-button-primary:hover {
+  background-color: #0077ED;
+  transform: translateY(-0.5px);
+}
+
+.apple-button-secondary {
+  background-color: #FFFFFF;
+  color: #1D1D1F;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 9999px;
+  font-weight: 500;
+  padding: 8px 18px;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apple-button-secondary:hover {
+  background-color: #F5F5F7;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
