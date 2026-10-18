@@ -1,5 +1,5 @@
 """
-CareerClaw - FR-27: 60-Second Judge Sandbox Mode
+CareerOrbit - FR-27: 60-Second Judge Sandbox Mode
 Provides an instant, zero-key, zero-CAPTCHA end-to-end execution loop for hackathon judges:
 Mem0 recall -> Nemotron 3 Ultra RenderCV PDF synthesis -> Browser Staging & Screenshot ->
 JWT Approval Webhook -> Final Portal Submission -> Google Calendar Focus Block Sync.

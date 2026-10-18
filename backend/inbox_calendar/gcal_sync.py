@@ -1,5 +1,5 @@
 """
-CareerClaw - FR-26: Google Calendar Auto-Scheduler
+CareerOrbit - FR-26: Google Calendar Auto-Scheduler
 Synchronizes extracted Online Assessment (OA) deadlines and Technical Interview slots
 directly to the student's Google Calendar with 24h email, 60m popup, and 15m popup reminders.
 """
@@ -14,7 +14,7 @@ from typing import Dict, Any, Optional
 from backend.config import settings
 from backend.database import get_db_connection
 
-logger = logging.getLogger("careerclaw.gcal_sync")
+logger = logging.getLogger("careerorbit.gcal_sync")
 
 def build_gcal_event_body(extracted_event: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -33,8 +33,8 @@ def build_gcal_event_body(extracted_event: Dict[str, Any]) -> Dict[str, Any]:
             f"Company: {company}\n"
             f"Type: {category}\n"
             f"Test / Meeting Link: {link}\n"
-            f"Notes: {extracted_event.get('notes', 'Auto-scheduled by CareerClaw Agent')}\n\n"
-            f"Auto-scheduled by CareerClaw Agent (Powered by NVIDIA Nemotron on Nebius Token Factory)."
+            f"Notes: {extracted_event.get('notes', 'Auto-scheduled by CareerOrbit Agent')}\n\n"
+            f"Auto-scheduled by CareerOrbit Agent (Powered by NVIDIA Nemotron on Nebius Token Factory)."
         ),
         "start": {
             "dateTime": extracted_event["start_datetime_iso"],
@@ -112,15 +112,14 @@ def sync_event_to_google_calendar(
 
     # Update database record if event_id provided
     if event_id:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("""
-            UPDATE inbox_events
-            SET synced_to_gcal = 1, gcal_event_link = ?
-            WHERE id = ?
-        """, (html_link, event_id))
-        conn.commit()
-        conn.close()
+        from backend.database import db_transaction
+        with db_transaction() as conn:
+            c = conn.cursor()
+            c.execute("""
+                UPDATE inbox_events
+                SET synced_to_gcal = 1, gcal_event_link = ?
+                WHERE id = ?
+            """, (html_link, event_id))
 
     return {
         "status": "success",

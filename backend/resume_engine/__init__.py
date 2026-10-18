@@ -1,1 +1,1 @@
-# CareerClaw Resume Engine Package
+# CareerOrbit Resume Engine Package

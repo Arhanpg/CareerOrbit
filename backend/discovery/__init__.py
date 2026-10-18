@@ -1,1 +1,1 @@
-# CareerClaw Discovery Package
+# CareerOrbit Discovery Package

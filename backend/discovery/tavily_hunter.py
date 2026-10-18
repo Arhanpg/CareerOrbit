@@ -3,7 +3,7 @@ import uuid
 from typing import List, Dict, Any
 from backend.config import settings
 
-logger = logging.getLogger("careerclaw.tavily_hunter")
+logger = logging.getLogger("careerorbit.tavily_hunter")
 
 def hunt_opportunities_via_tavily(
     role_query: str = "AI ML Machine Learning",
@@ -30,7 +30,7 @@ def hunt_opportunities_via_tavily(
 
             for q in queries:
                 logger.info(f"Querying Tavily: {q}")
-                resp = client.search(query=q, search_depth="advanced", max_results=5, days=7)
+                resp = client.search(query=q, search_depth="basic", max_results=5, days=7)
                 for item in resp.get("results", []):
                     results.append({
                         "id": f"tavily_{uuid.uuid4().hex[:10]}",

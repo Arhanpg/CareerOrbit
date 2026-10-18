@@ -1,1 +1,1 @@
-# CareerClaw Browser Agent & HITL Package
+# CareerOrbit Browser Agent & HITL Package

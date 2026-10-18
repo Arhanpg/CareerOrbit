@@ -1,4 +1,4 @@
-# CareerClaw Production Dockerfile for Render / Koyeb / Fly.io / Nebius
+# CareerOrbit Production Dockerfile for Render / Koyeb / Fly.io / Nebius
 FROM python:3.12-slim
 
 WORKDIR /app

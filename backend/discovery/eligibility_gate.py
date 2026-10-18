@@ -2,16 +2,17 @@ import json
 import logging
 from typing import Dict, Any, Optional
 from backend.config import settings
-from backend.llm_router import llm_router
+from backend.llm_router import llm_router, extract_json_dict
 
-logger = logging.getLogger("careerclaw.eligibility_gate")
+logger = logging.getLogger("careerorbit.eligibility_gate")
 
 def evaluate_batch_2028_eligibility(
     job_record: Dict[str, Any],
-    candidate_constraints: Optional[Dict[str, Any]] = None
+    candidate_constraints: Optional[Dict[str, Any]] = None,
+    use_llm: bool = True
 ) -> Dict[str, Any]:
     """
-    FR-12: Uses Tier-1 Nemotron 3.5 Lightning ($0.06/1M tokens) to evaluate
+    FR-012: Uses Tier-1 Nemotron 3.5 Lightning ($0.06/1M tokens) to evaluate
     opportunities against B.Tech 2028 student constraints.
     Rejects:
     1. Roles requiring full-time 2+ years of post-graduation experience.
@@ -30,38 +31,14 @@ def evaluate_batch_2028_eligibility(
     title = job_record.get("title", "")
     company = job_record.get("company", "")
     location = job_record.get("location", "")
-    description = str(job_record.get("description", ""))[:4000]
+    description = str(job_record.get("description", ""))[:3000]
 
-    # Pre-filter checks or LLM reasoning
-    prompt = f"""
-Evaluate this opportunity against the student's hard constraints.
-Student Constraints: {json.dumps(constraints)}
-Opportunity Title: {title}
-Company: {company}
-Location: {location}
-Description: {description}
-
-Reject immediately if:
-1. It requires full-time 2+ years of post-graduation experience.
-2. It explicitly restricts eligibility ONLY to 2025 or 2026 graduates (student is 2028 batch / 3rd year B.Tech).
-3. It is an unpaid training scam where the student must pay a fee or register for paid courses.
-4. It requires on-site presence outside India without relocation support.
-
-Return strict JSON:
-{{
-  "is_eligible": bool,
-  "match_score": int,
-  "role_category": "SDE" | "AIML" | "HACKATHON" | "FREELANCE",
-  "matched_skills": [string],
-  "rejection_reason": string or null
-}}
-"""
-    # Deterministic rule evaluation for tests/offline or pre-filtering
+    # Deterministic rule pre-filtering (fast & reliable)
     desc_lower = description.lower()
     title_lower = title.lower()
 
     # Rule 1: Scam detection
-    if any(k in desc_lower for k in ["pay a fee", "training fee", "registration fee", "course fee", "unpaid training"]):
+    if any(k in desc_lower for k in ["pay a fee", "training fee", "registration fee", "course fee", "unpaid training", "security deposit"]):
         return {
             "is_eligible": False,
             "match_score": 0,
@@ -90,17 +67,33 @@ Return strict JSON:
             "rejection_reason": "Restricted strictly to 2025/2026 graduates; candidate is 2028 batch"
         }
 
-    # If live Nebius configured, query Nemotron 3.5 Lightning
-    if settings.is_nebius_configured:
+    # If live Nebius configured and use_llm enabled, query Nemotron 3.5 Lightning with robust JSON parsing
+    if settings.is_nebius_configured and use_llm:
+        prompt = f"""Evaluate this opportunity for a 3rd-year B.Tech student (Class of 2028).
+Title: {title}
+Company: {company}
+Location: {location}
+Description: {description}
+
+Output strict JSON:
+{{
+  "is_eligible": bool,
+  "match_score": int,
+  "role_category": "SDE" | "AIML" | "HACKATHON" | "FREELANCE",
+  "matched_skills": ["string"],
+  "rejection_reason": null or "string"
+}}"""
         try:
             resp_str = llm_router.call_tier1_fast(
-                messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"},
-                temperature=0.0
+                prompt=prompt,
+                json_mode=True,
+                temperature=0.0,
+                max_tokens=1024,
+                task_name="eligibility_evaluation"
             )
-            return json.loads(resp_str)
+            return extract_json_dict(resp_str)
         except Exception as e:
-            logger.warning(f"Nemotron 3.5 Lightning evaluation call failed: {e}. Falling back to rule engine.")
+            logger.warning(f"Nemotron 3.5 Lightning live note: {e}. Using deterministic evaluation.")
 
     # High match detection for hackathons
     if "hackathon" in title_lower or "hackathon" in desc_lower or "challenge" in title_lower:

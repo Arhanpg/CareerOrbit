@@ -1,5 +1,5 @@
 """
-CareerClaw - FR-27 & Mock Corporate ATS Portal Route
+CareerOrbit - FR-27 & Mock Corporate ATS Portal Route
 Provides self-hosted, deterministic mock company ATS portals (e.g. Adobe Workday/Greenhouse style)
 for 100% reproducible browser testing and 60-Second Judge Sandbox evaluation with zero external CAPTCHAs.
 """

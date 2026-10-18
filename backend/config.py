@@ -26,13 +26,13 @@ class Settings:
     TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
     
     # HITL Security & App URLs
-    HITL_JWT_SECRET: str = os.getenv("HITL_JWT_SECRET", "careerclaw-secure-jwt-key-2026")
+    HITL_JWT_SECRET: str = os.getenv("HITL_JWT_SECRET", "careerorbit-secure-jwt-key-2026")
     APP_BASE_URL: str = os.getenv("APP_BASE_URL", "http://localhost:3000")
     API_BASE_URL: str = os.getenv("API_BASE_URL", "http://localhost:8000")
     
     # Storage and DB
     STORAGE_DIR: Path = Path(os.getenv("STORAGE_DIR", str(BACKEND_DIR / "storage")))
-    SQLITE_DB_PATH: Path = Path(os.getenv("SQLITE_DB_PATH", str(BACKEND_DIR / "storage" / "careerclaw.db")))
+    SQLITE_DB_PATH: Path = Path(os.getenv("SQLITE_DB_PATH", str(BACKEND_DIR / "storage" / "careerorbit.db")))
     CHROME_PROFILE_DIR: Path = Path(os.getenv("CHROME_PROFILE_DIR", str(BACKEND_DIR / "storage" / "chrome_profile")))
     STORAGE_STATE_PATH: Path = Path(os.getenv("STORAGE_STATE_PATH", str(BACKEND_DIR / "storage" / "storage_state.json")))
     SCREENSHOTS_DIR: Path = Path(os.getenv("SCREENSHOTS_DIR", str(BACKEND_DIR / "storage" / "screenshots")))

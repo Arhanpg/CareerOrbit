@@ -1,8 +1,8 @@
 #!/bin/bash
-# CareerClaw One-Command Startup Script for Judges and Hackathon Reviewers
+# CareerOrbit One-Command Startup Script for Judges and Hackathon Reviewers
 
 echo "================================================================="
-echo "  Starting CareerClaw Autonomous Career Operating System"
+echo "  Starting CareerOrbit Autonomous Career Operating System"
 echo "  Nebius x NVIDIA Global AI Hackathon (Personal AI Track)"
 echo "================================================================="
 
@@ -17,7 +17,7 @@ cd frontend && npm run dev &
 FRONTEND_PID=$!
 
 echo "================================================================="
-echo "  CareerClaw Control Plane is live!"
+echo "  CareerOrbit Control Plane is live!"
 echo "  Web UI:    http://localhost:3000"
 echo "  API Docs:  http://localhost:8000/docs"
 echo "  Judge 60s: Toggle 'Judge 60s Demo: ON' in top navigation bar"

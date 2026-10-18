@@ -24,14 +24,16 @@ import { API_BASE_URL } from "@/lib/api";
 export default function OverviewPage() {
   const [profile, setProfile] = useState<any>(null);
   const [health, setHealth] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [profileRes, healthRes] = await Promise.all([
+        const [profileRes, healthRes, metricsRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/profile/constraints`).catch(() => null),
-          fetch(`${API_BASE_URL}/health`).catch(() => null)
+          fetch(`${API_BASE_URL}/health`).catch(() => null),
+          fetch(`${API_BASE_URL}/api/v1/operations/metrics`).catch(() => null)
         ]);
 
         if (profileRes && profileRes.ok) {
@@ -56,6 +58,11 @@ export default function OverviewPage() {
           const h = await healthRes.json();
           setHealth(h);
         }
+
+        if (metricsRes && metricsRes.ok) {
+          const m = await metricsRes.json();
+          setMetrics(m);
+        }
       } catch (err) {
         console.error("Error loading overview data:", err);
       } finally {
@@ -63,6 +70,8 @@ export default function OverviewPage() {
       }
     }
     loadData();
+    const timer = setInterval(loadData, 8000);
+    return () => clearInterval(timer);
   }, []);
 
   return (
@@ -84,7 +93,7 @@ export default function OverviewPage() {
               Welcome back, {profile?.full_name || "Aman Sharma"}
             </h1>
             <p className="text-[15px] text-[#86868B] max-w-2xl leading-relaxed">
-              CareerClaw is running 24/7 in the cloud—discovering verified internships on Naukri, LinkedIn, Unstop & Big Tech portals, dynamically tailoring ATS-proof RenderCV resumes, and preparing staged applications behind your email approval gate.
+              CareerOrbit is running 24/7 in the cloud—discovering verified internships on Naukri, LinkedIn, Unstop &amp; Big Tech portals, dynamically tailoring ATS-proof RenderCV resumes, and preparing staged applications behind your email approval gate.
             </p>
           </div>
 
@@ -215,7 +224,11 @@ export default function OverviewPage() {
               Continuous 24/7 background filtering for B.Tech 2028 batch, scam detection, Mem0 additive fact extraction, and Gmail inbox triage.
             </p>
             <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[11px]">
-              <span className="text-[#86868B]">Status</span>
+              <span className="text-[#86868B]">
+                {metrics?.model_telemetry?.["nebius/nvidia/Nemotron-3_5-Lightning"]
+                  ? `${metrics.model_telemetry["nebius/nvidia/Nemotron-3_5-Lightning"].total_calls} calls • ${metrics.model_telemetry["nebius/nvidia/Nemotron-3_5-Lightning"].avg_latency_ms}ms avg`
+                  : "Live Telemetry Active"}
+              </span>
               <span className="text-[#1D8348] font-medium flex items-center gap-1">
                 <CheckCircle className="w-3 h-3 fill-[#34C759] text-white" /> Active
               </span>
@@ -238,7 +251,11 @@ export default function OverviewPage() {
               Drives browser-use CDP execution loop, parses accessibility trees, maps candidate memory to complex multi-step forms with zero credential leak.
             </p>
             <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[11px]">
-              <span className="text-[#86868B]">Status</span>
+              <span className="text-[#86868B]">
+                {metrics?.model_telemetry?.["nebius/nvidia/nemotron-3-super-120b-a12b"]
+                  ? `${metrics.model_telemetry["nebius/nvidia/nemotron-3-super-120b-a12b"].total_calls} calls • ${metrics.model_telemetry["nebius/nvidia/nemotron-3-super-120b-a12b"].avg_latency_ms}ms avg`
+                  : "CDP Ready"}
+              </span>
               <span className="text-[#1D8348] font-medium flex items-center gap-1">
                 <CheckCircle className="w-3 h-3 fill-[#34C759] text-white" /> Ready
               </span>
@@ -261,7 +278,11 @@ export default function OverviewPage() {
               Deep job gap analysis, Action-Technology-Result bullet synthesis, and strict Pydantic-validated RenderCV YAML schema generation.
             </p>
             <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[11px]">
-              <span className="text-[#86868B]">Status</span>
+              <span className="text-[#86868B]">
+                {metrics?.model_telemetry?.["nebius/nvidia/Nemotron-3-Ultra-550b-a55b"]
+                  ? `${metrics.model_telemetry["nebius/nvidia/Nemotron-3-Ultra-550b-a55b"].total_calls} calls • ${metrics.model_telemetry["nebius/nvidia/Nemotron-3-Ultra-550b-a55b"].avg_latency_ms}ms avg`
+                  : "Verified Pass"}
+              </span>
               <span className="text-[#1D8348] font-medium flex items-center gap-1">
                 <CheckCircle className="w-3 h-3 fill-[#34C759] text-white" /> Ready
               </span>
@@ -269,6 +290,31 @@ export default function OverviewPage() {
           </div>
 
         </div>
+
+        {/* Live Search Runs & Discovery Activity Timeline */}
+        {metrics?.recent_search_runs && metrics.recent_search_runs.length > 0 && (
+          <div className="pt-4 border-t border-black/[0.06] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] font-semibold text-[#1D1D1F] uppercase tracking-wider">
+                Recent 24/7 Discovery Runs &amp; Telemetry
+              </span>
+              <span className="text-[11px] text-[#86868B]">Live Stream</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {metrics.recent_search_runs.slice(0, 3).map((run: any, idx: number) => (
+                <div key={idx} className="p-3 rounded-xl bg-white border border-black/[0.06] text-[12px] space-y-1">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-[#0071E3]">
+                    <span className="truncate">{run.query || "AI/ML & SDE Intern"}</span>
+                    <span className="text-[#1D8348]">+{run.new_opportunities} found</span>
+                  </div>
+                  <p className="text-[11px] text-[#86868B] truncate">
+                    Sources: {run.sources_polled || "JobSpy, Tavily, ATS"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Two Column Layout: Student Constraints & Recent Applications */}

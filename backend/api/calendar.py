@@ -1,5 +1,5 @@
 """
-CareerClaw - Inbox & Google Calendar API Router
+CareerOrbit - Inbox & Google Calendar API Router
 Endpoints for viewing recruiter communications, triggering inbox polling,
 and simulating incoming OA invitations and interview slots for judges.
 """

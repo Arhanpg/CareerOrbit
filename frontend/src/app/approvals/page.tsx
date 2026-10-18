@@ -51,9 +51,24 @@ export default function ApprovalsPage() {
       const res = await fetch(getApiUrl("/api/v1/applications"));
       if (res.ok) {
         const data = await res.json();
-        setApplications(data.applications || []);
-        if (data.applications?.length > 0 && !selectedApp) {
-          setSelectedApp(data.applications[0]);
+        const apps = data.applications || [];
+        setApplications(apps);
+        
+        // Check for ?improve_app_id=... in URL
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const improveId = params.get("improve_app_id");
+          if (improveId) {
+            const match = apps.find((a: Application) => a.id === improveId);
+            if (match) {
+              setSelectedApp(match);
+              setShowImproveModal(true);
+            }
+          } else if (apps.length > 0 && !selectedApp) {
+            setSelectedApp(apps[0]);
+          }
+        } else if (apps.length > 0 && !selectedApp) {
+          setSelectedApp(apps[0]);
         }
       }
     } catch (err) {
@@ -100,15 +115,38 @@ export default function ApprovalsPage() {
     setActionLoading(true);
     setStatusMessage("Replaying browser actions & clicking final Submit...");
     try {
-      // Create and invoke approve token
-      const tokenRes = await fetch(getApiUrl("/api/v1/hitl/decide?token=mock_or_direct"), {
-        method: "GET"
+      const res = await fetch(getApiUrl(`/api/v1/applications/${appId}/approve`), {
+        method: "POST"
       });
-      // Or call stage endpoint directly
-      setStatusMessage("Application Approved and Submitted!");
+      if (res.ok) {
+        setStatusMessage("Application Approved and Submitted!");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setStatusMessage(data.detail || "Approval processed.");
+      }
       await fetchApplications();
     } catch (err) {
       setStatusMessage("Approved & Submitted successfully.");
+      await fetchApplications();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Reject / Archive application
+  const handleReject = async (appId: string) => {
+    setActionLoading(true);
+    setStatusMessage("Rejecting & archiving application...");
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/applications/${appId}/reject`), {
+        method: "POST"
+      });
+      if (res.ok) {
+        setStatusMessage("Application rejected and archived.");
+      }
+      await fetchApplications();
+    } catch (err) {
+      setStatusMessage("Application archived.");
       await fetchApplications();
     } finally {
       setActionLoading(false);
@@ -401,7 +439,16 @@ export default function ApprovalsPage() {
                       className="w-full sm:w-auto py-3 px-5 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
                     >
                       <RotateCcw className="w-4 h-4 text-[#86868B]" />
-                      Improve Resume / Fields
+                      Improve
+                    </button>
+
+                    <button
+                      onClick={() => handleReject(selectedApp.id)}
+                      disabled={actionLoading || selectedApp.status === "REJECTED_BY_USER"}
+                      className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-red-50 border border-red-200 text-red-600 font-semibold text-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      <X className="w-4 h-4 text-red-500" />
+                      Reject
                     </button>
                   </div>
 

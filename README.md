@@ -1,4 +1,4 @@
-# CareerClaw 🦅
+# CareerOrbit 🦅
 ### Autonomous Student Opportunity Hunter, Dynamic ATS Resume Compiler & HITL Browser Applier
 **Engineered for the Nebius x NVIDIA Global AI Hackathon (Personal AI Track & Best Use of Tavily Bonus)**
 
@@ -12,9 +12,9 @@
 
 ## 🌟 Executive Summary
 
-**CareerClaw** is a 24/7 autonomous career operating system designed to eliminate the high-friction internship and job application bottlenecks faced by undergraduate engineering students in India—specifically tailored for the **B.Tech 2028 graduating cohort**.
+**CareerOrbit** is a 24/7 autonomous career operating system designed to eliminate the high-friction internship and job application bottlenecks faced by undergraduate engineering students in India—specifically tailored for the **B.Tech 2028 graduating cohort**.
 
-Rather than being a conversational chatbot wrapper, CareerClaw operates as an **always-on, credit-aware autonomous agent** powered by a **three-tier NVIDIA Nemotron 3 hierarchy** on **Nebius Token Factory**, hybrid vector-graph memory with Mem0 + Qdrant, deterministic typographical resume synthesis with RenderCV + Typst, sandboxed browser execution, and a cryptographic email approval gate.
+Rather than being a conversational chatbot wrapper, CareerOrbit operates as an **always-on, credit-aware autonomous agent** powered by a **three-tier NVIDIA Nemotron 3 hierarchy** on **Nebius Token Factory**, hybrid vector-graph memory with Mem0 + Qdrant, deterministic typographical resume synthesis with RenderCV + Typst, sandboxed browser execution, and a cryptographic email approval gate.
 
 ```
                     ┌────────────────────────────────────────────────────────┐
@@ -53,7 +53,7 @@ Rather than being a conversational chatbot wrapper, CareerClaw operates as an **
 
 To maximize token credit longevity and minimize latency, all inference is deterministically routed across the **NVIDIA Nemotron 3** hierarchy via the OpenAI-compatible endpoint (`https://api.tokenfactory.nebius.com/v1`):
 
-| Model Identifier on Nebius | Architecture & Context | Cost (In / Out per 1M) | Assigned Subsystem in CareerClaw |
+| Model Identifier on Nebius | Architecture & Context | Cost (In / Out per 1M) | Assigned Subsystem in CareerOrbit |
 | :--- | :--- | :--- | :--- |
 | `nebius/Qwen/Qwen3-Embedding-8B` | 8B Dense Embedder (41K Context) | $0.01 / — | Vectorizing resumes, user memories, and project READMEs in Mem0 + Qdrant |
 | `nebius/nvidia/Nemotron-3_5-Lightning` | 30B Hybrid MoE, 3B Active | $0.06 / $0.24 | **Tier 1 (High-Frequency Daemon)**: 24/7 B.Tech 2028 batch verification, scam filtering, Mem0 fact extraction, Gmail OA triage |
@@ -64,7 +64,7 @@ To maximize token credit longevity and minimize latency, all inference is determ
 
 ## 🎨 Apple Human Interface Guidelines Design System
 
-CareerClaw's frontend is built with Next.js App Router and strictly enforces the **Cupertino Light-Mode Aesthetic**:
+CareerOrbit's frontend is built with Next.js App Router and strictly enforces the **Cupertino Light-Mode Aesthetic**:
 - **App Canvas Background**: `#F5F5F7` (Apple System Grouped Canvas)
 - **Elevated Card Surface**: `#FFFFFF` with `rounded-[20px]` and 1px hairline borders (`rgba(0,0,0,0.06)`)
 - **Frosted Glass Navigation**: Translucent sticky bar with `backdrop-filter: blur(20px) saturate(180%)`
@@ -182,7 +182,7 @@ For Devpost hackathon judges evaluating submissions rapidly:
 *Submitted for the $100 + NVIDIA Swag Most Valuable Feedback Award.*
 
 ### Quantitative Benchmark Telemetry
-Across 100+ autonomous agent cycles in CareerClaw:
+Across 100+ autonomous agent cycles in CareerOrbit:
 
 | Model | Average Latency | JSON Compliance Rate | Cost per 1M Tokens (Input / Output) | Best Fit in Agent Architecture |
 | :--- | :--- | :--- | :--- | :--- |

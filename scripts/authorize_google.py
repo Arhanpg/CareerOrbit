@@ -1,5 +1,5 @@
 """
-CareerClaw - FR-24 & FR-26: Google OAuth 2.0 Authorization Script
+CareerOrbit - FR-24 & FR-26: Google OAuth 2.0 Authorization Script
 Authorizes Gmail (Read-Only) and Google Calendar (Events) APIs.
 Saves persistent refresh token to ./storage/google_token.json so the 24/7 cloud daemon
 can monitor recruiter emails and schedule OA focus blocks without ongoing interactive prompts.
@@ -42,7 +42,7 @@ def authorize_google(test_mode: bool = False):
             break
 
     print("\n" + "=" * 65)
-    print("  CareerClaw: Gmail & Google Calendar Authorization")
+    print("  CareerOrbit: Gmail & Google Calendar Authorization")
     print("=" * 65)
     print(f"Credentials File: {credentials_path or 'NOT FOUND'}")
     print(f"Target Token:     {token_path}")
@@ -90,7 +90,7 @@ def authorize_google(test_mode: bool = False):
         return None
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Authorize CareerClaw with Google APIs.")
+    parser = argparse.ArgumentParser(description="Authorize CareerOrbit with Google APIs.")
     parser.add_argument("--test", action="store_true", help="Generate mock token for automated verification.")
     args = parser.parse_args()
 

@@ -82,7 +82,7 @@ export default function Navigation() {
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-[17px] tracking-[-0.022em] text-[#1D1D1F]">
-                  CareerClaw
+                  CareerOrbit
                 </span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#E8E8ED] text-[#86868B]">
                   B.Tech 2028

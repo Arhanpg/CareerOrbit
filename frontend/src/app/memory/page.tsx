@@ -13,7 +13,9 @@ import {
   PlusCircle, 
   Tag, 
   Check,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  Trash2
 } from "lucide-react";
 import { getApiUrl } from "@/lib/api";
 
@@ -38,6 +40,8 @@ export default function MemoryVaultPage() {
   });
 
   const [memories, setMemories] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [conflicts, setConflicts] = useState<any[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("ALL");
   const [chatInput, setChatInput] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -48,6 +52,8 @@ export default function MemoryVaultPage() {
   useEffect(() => {
     fetchProfile();
     fetchMemories();
+    fetchDocuments();
+    fetchConflicts();
   }, []);
 
   const fetchProfile = async () => {
@@ -71,6 +77,62 @@ export default function MemoryVaultPage() {
       }
     } catch (err) {
       console.log("Running local mock memories");
+    }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const res = await fetch(getApiUrl("/api/v1/memory/documents"));
+      if (res.ok) {
+        const data = await res.json();
+        setDocuments(data.documents || []);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const fetchConflicts = async () => {
+    try {
+      const res = await fetch(getApiUrl("/api/v1/memory/conflicts"));
+      if (res.ok) {
+        const data = await res.json();
+        setConflicts(data.conflicts || []);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleResolveConflict = async (conflictId: string, resolution: "KEEP_EXISTING" | "UPDATE_TO_NEW") => {
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/memory/conflicts/${conflictId}/resolve`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resolution })
+      });
+      if (res.ok) {
+        setNotification(`Conflict resolved: ${resolution}`);
+        fetchConflicts();
+        fetchMemories();
+        fetchProfile();
+      }
+    } catch {
+      setNotification("Error resolving conflict.");
+    }
+  };
+
+  const handleDeleteFact = async (factId: string) => {
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/memory/facts/${factId}`), {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        setNotification("Fact deleted from active memory vault.");
+        fetchMemories();
+      }
+    } catch {
+      setNotification("Failed to delete fact.");
     }
   };
 
@@ -112,6 +174,8 @@ export default function MemoryVaultPage() {
         const data = await res.json();
         setNotification(`Extracted ${data.total_facts_stored} facts from ${data.files_processed} files into Mem0.`);
         fetchMemories();
+        fetchDocuments();
+        fetchConflicts();
         setTimeout(() => setNotification(null), 4000);
       }
     } catch (err) {
@@ -134,6 +198,7 @@ export default function MemoryVaultPage() {
         setChatInput("");
         setNotification("New atomic memory fact synthesized by Nemotron 3.5 Lightning.");
         fetchMemories();
+        fetchConflicts();
         setTimeout(() => setNotification(null), 3500);
       }
     } catch (err) {
@@ -357,9 +422,72 @@ export default function MemoryVaultPage() {
             </form>
           </div>
 
+          {/* Document Registry Card */}
+          {documents.length > 0 && (
+            <div className="apple-card p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-[#1D1D1F] flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-[#0071E3]" />
+                  Uploaded Document Registry ({documents.length})
+                </span>
+                <span className="text-[11px] text-[#86868B]">Provenance Tracked</span>
+              </div>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="p-2.5 rounded-xl bg-[#F5F5F7] border border-black/[0.04] flex items-center justify-between text-[12px]">
+                    <div className="truncate max-w-[220px]">
+                      <span className="font-medium text-[#1D1D1F] block truncate">{doc.filename}</span>
+                      <span className="text-[10px] text-[#86868B]">{doc.facts_extracted} facts extracted</span>
+                    </div>
+                    <span className="text-[10px] text-[#86868B] font-mono">{doc.content_hash.slice(0, 8)}...</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
 
       </div>
+
+      {/* Contradiction & Conflict Resolution Alert (FR-008, Scenario B) */}
+      {conflicts.length > 0 && (
+        <div className="apple-card p-6 border-amber-300 bg-amber-50/40 space-y-4">
+          <div className="flex items-center gap-2 text-[#B76E00]">
+            <AlertTriangle className="w-5 h-5 text-[#FF9500]" />
+            <h2 className="font-semibold text-[16px] text-[#1D1D1F]">
+              Contradiction Detected Across Memory Documents (FR-008)
+            </h2>
+          </div>
+          <p className="text-[13px] text-[#86868B]">
+            A newly uploaded document or note contains conflicting candidate constraints. Choose which value to retain as ground truth.
+          </p>
+          <div className="space-y-3">
+            {conflicts.map((conf) => (
+              <div key={conf.id} className="p-4 rounded-xl bg-white border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="font-bold text-[13px] text-[#1D1D1F] uppercase">{conf.field_name}: </span>
+                  <span className="text-[13px] text-[#86868B]">Existing: <strong>{conf.existing_value}</strong> vs Uploaded: <strong>{conf.new_value}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleResolveConflict(conf.id, "KEEP_EXISTING")}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-semibold bg-[#F5F5F7] hover:bg-[#E8E8ED] text-[#1D1D1F]"
+                  >
+                    Keep Existing ({conf.existing_value})
+                  </button>
+                  <button
+                    onClick={() => handleResolveConflict(conf.id, "UPDATE_TO_NEW")}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-semibold bg-[#0071E3] hover:bg-[#0077ED] text-white"
+                  >
+                    Update to New ({conf.new_value})
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bottom Section: Extracted Atomic Memory Cards */}
       <div className="apple-card p-6 sm:p-7 space-y-5">
@@ -429,8 +557,14 @@ export default function MemoryVaultPage() {
                   </p>
 
                   <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[11px] text-[#86868B]">
-                    <span>Qdrant Vector Indexed</span>
-                    <span>Class of 2028</span>
+                    <span>Qdrant Vector Indexed • Class of 2028</span>
+                    <button
+                      onClick={() => handleDeleteFact(mem.id)}
+                      className="text-[#86868B] hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50"
+                      title="Delete fact from active retrieval"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               );

@@ -84,6 +84,12 @@ export default function CalendarPage() {
         body: "Hi Candidate, Please complete the Adobe AI/ML challenge on CodeSignal within 72 hours: https://app.codesignal.com/invite/adobe-aiml-2028",
         sender: "talent@adobe.com"
       };
+    } else if (simulationPreset === "ambiguous_next_week") {
+      payload = {
+        subject: "Google Careers: Internship Update — Next Steps",
+        body: "Hi Aman, We reviewed your application for the 2028 Summer Internship. We would like to schedule a 45-minute interview sometime next week. We will follow up soon with specific available times.",
+        sender: "recruiting-team@google.com"
+      };
     }
 
     try {
@@ -238,6 +244,7 @@ export default function CalendarPage() {
                 <option value="amazon_oa">Amazon SDE: HackerRank OA (48h Window)</option>
                 <option value="msft_interview">Microsoft: Technical Round 1 (Teams)</option>
                 <option value="adobe_oa">Adobe: AI/ML CodeSignal Assessment</option>
+                <option value="ambiguous_next_week">Google: Ambiguous Date ("Next Week" — Scenario F)</option>
               </select>
 
               <button
@@ -271,72 +278,83 @@ export default function CalendarPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {events.map((ev) => (
-                <div key={ev.id} className="apple-card p-5 flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <span className="text-xs font-bold text-[#86868B] uppercase tracking-wider">
-                        {ev.company_name}
-                      </span>
-                      {getCategoryBadge(ev.event_category)}
+              {events.map((ev) => {
+                const isAmbiguous = !ev.start_datetime_iso || !ev.synced_to_gcal;
+                return (
+                  <div key={ev.id} className="apple-card p-5 flex flex-col justify-between hover:shadow-md transition-shadow">
+                    <div>
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <span className="text-xs font-bold text-[#86868B] uppercase tracking-wider">
+                          {ev.company_name}
+                        </span>
+                        {getCategoryBadge(ev.event_category)}
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-base font-bold text-[#1D1D1F] line-clamp-2 mb-2">
+                        {ev.event_title}
+                      </h3>
+
+                      {/* Times */}
+                      <div className="rounded-xl p-3 bg-[#F8F9FA] border border-black/[0.04] space-y-1.5 text-xs text-[#515154] mb-3">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-[#0071E3]" />
+                          <span className="font-semibold text-[#1D1D1F]">Start:</span>
+                          <span>{formatIsoDate(ev.start_datetime_iso)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-[#86868B]" />
+                          <span className="font-semibold text-[#1D1D1F]">End:</span>
+                          <span>{formatIsoDate(ev.end_datetime_iso)}</span>
+                        </div>
+                      </div>
+
+                      {/* Action link */}
+                      {ev.action_link && (
+                        <div className="mb-3">
+                          <a
+                            href={ev.action_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-[#0071E3] hover:underline font-medium truncate max-w-full"
+                          >
+                            <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                            <span>Direct Test / Meeting Link</span>
+                          </a>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-base font-bold text-[#1D1D1F] line-clamp-2 mb-2">
-                      {ev.event_title}
-                    </h3>
+                    {/* Footer / GCal Button */}
+                    <div className="pt-3 border-t border-black/[0.06] flex items-center justify-between">
+                      {isAmbiguous ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#B76E00] bg-[#FFF4E5] px-2 py-0.5 rounded-full">
+                          <AlertCircle className="w-3.5 h-3.5 text-[#FF9500]" /> Needs Recruiter Confirmation
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1D8348]">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Synced to Calendar
+                        </span>
+                      )}
 
-                    {/* Times */}
-                    <div className="rounded-xl p-3 bg-[#F8F9FA] border border-black/[0.04] space-y-1.5 text-xs text-[#515154] mb-3">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-[#0071E3]" />
-                        <span className="font-semibold text-[#1D1D1F]">Start:</span>
-                        <span>{formatIsoDate(ev.start_datetime_iso)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-[#86868B]" />
-                        <span className="font-semibold text-[#1D1D1F]">End:</span>
-                        <span>{formatIsoDate(ev.end_datetime_iso)}</span>
-                      </div>
-                    </div>
-
-                    {/* Action link */}
-                    {ev.action_link && (
-                      <div className="mb-3">
+                      {ev.gcal_event_link ? (
                         <a
-                          href={ev.action_link}
+                          href={ev.gcal_event_link}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-[#0071E3] hover:underline font-medium truncate max-w-full"
+                          className="px-3 py-1.5 rounded-full bg-[#0071E3] text-white text-[11px] font-semibold hover:bg-[#0077ED] transition-colors flex items-center gap-1 shadow-sm"
                         >
-                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                          <span>Direct Test / Meeting Link</span>
+                          Open in Google Calendar
+                          <ExternalLink className="w-3 h-3" />
                         </a>
-                      </div>
-                    )}
+                      ) : (
+                        <span className="text-[10px] text-[#86868B]">Zero-Hallucination Guard</span>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Footer / GCal Button */}
-                  <div className="pt-3 border-t border-black/[0.06] flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1D8348]">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Synced to Calendar
-                    </span>
-
-                    {ev.gcal_event_link && (
-                      <a
-                        href={ev.gcal_event_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-1.5 rounded-full bg-[#0071E3] text-white text-[11px] font-semibold hover:bg-[#0077ED] transition-colors flex items-center gap-1 shadow-sm"
-                      >
-                        Open in Google Calendar
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

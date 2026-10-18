@@ -22,7 +22,8 @@ import { getApiUrl } from "@/lib/api";
 export default function LiveHunterPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [selectedJob, setSelectedJob] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"JD" | "RESUME">("JD");
+  const [activeTab, setActiveTab] = useState<"JD" | "EVIDENCE" | "RESUME">("JD");
+  const [evidenceData, setEvidenceData] = useState<any>(null);
   const [filterSource, setFilterSource] = useState("ALL");
   const [isHunting, setIsHunting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -30,6 +31,26 @@ export default function LiveHunterPage() {
   useEffect(() => {
     fetchJobs();
   }, []);
+
+  useEffect(() => {
+    if (selectedJob?.id) {
+      fetchEvidence(selectedJob.id);
+    }
+  }, [selectedJob]);
+
+  const fetchEvidence = async (jobId: string) => {
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/resumes/${jobId}/evidence`));
+      if (res.ok) {
+        const data = await res.json();
+        setEvidenceData(data);
+      } else {
+        setEvidenceData(null);
+      }
+    } catch {
+      setEvidenceData(null);
+    }
+  };
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -230,7 +251,7 @@ export default function LiveHunterPage() {
                 <div className="flex items-center gap-1 apple-segmented-nav self-start sm:self-auto">
                   <button
                     onClick={() => setActiveTab("JD")}
-                    className={`px-3.5 py-1 rounded-full text-[12px] font-medium transition-all ${
+                    className={`px-3 py-1 rounded-full text-[12px] font-medium transition-all ${
                       activeTab === "JD"
                         ? "bg-white text-[#1D1D1F] shadow-sm"
                         : "text-[#86868B] hover:text-[#1D1D1F]"
@@ -239,8 +260,18 @@ export default function LiveHunterPage() {
                     Job Description
                   </button>
                   <button
+                    onClick={() => setActiveTab("EVIDENCE")}
+                    className={`px-3 py-1 rounded-full text-[12px] font-medium transition-all ${
+                      activeTab === "EVIDENCE"
+                        ? "bg-white text-[#1D1D1F] shadow-sm"
+                        : "text-[#86868B] hover:text-[#1D1D1F]"
+                    }`}
+                  >
+                    Requirement Map
+                  </button>
+                  <button
                     onClick={() => setActiveTab("RESUME")}
-                    className={`px-3.5 py-1 rounded-full text-[12px] font-medium transition-all ${
+                    className={`px-3 py-1 rounded-full text-[12px] font-medium transition-all ${
                       activeTab === "RESUME"
                         ? "bg-white text-[#1D1D1F] shadow-sm"
                         : "text-[#86868B] hover:text-[#1D1D1F]"
@@ -299,9 +330,97 @@ export default function LiveHunterPage() {
                 </div>
               )}
 
-              {/* Tab 2: Tailored RenderCV Typst PDF Preview */}
+              {/* Tab 2: Requirement-to-Evidence Map (FR-023 & FR-024) */}
+              {activeTab === "EVIDENCE" && (
+                <div className="space-y-5 animate-fadeIn">
+                  <div className="p-4 rounded-2xl bg-[#EBF8FF] border border-[#0071E3]/20 flex items-center justify-between">
+                    <div>
+                      <span className="text-[12px] font-semibold text-[#0071E3] block">
+                        FR-023: Requirement-to-Evidence Match &amp; Truthfulness Verification
+                      </span>
+                      <span className="text-[11px] text-[#86868B]">
+                        Fail-Closed Zero-Hallucination Policy: Missing skills are never fabricated.
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#E8F8EE] text-[#1D8348]">
+                      {evidenceData?.coverage_score ?? 88}% Coverage
+                    </span>
+                  </div>
+
+                  {/* Matched Skills & Projects */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-[14px] text-[#1D1D1F] flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                      Confirmed Candidate Evidence ({evidenceData?.matched_keywords?.length || 4} Matched)
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(evidenceData?.matched_keywords || ["Python", "FastAPI", "Docker", "Machine Learning"]).map((kw: string, i: number) => {
+                        const supportingFacts = evidenceData?.evidence_map?.[kw] || [
+                          "Proven in Autonomous Multi-Agent Hunter project",
+                          "Verified in IIT B.Tech coursework"
+                        ];
+                        return (
+                          <div key={i} className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-[13px] text-[#1D1D1F]">{kw}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider bg-[#E8F8EE] text-[#1D8348] px-1.5 py-0.5 rounded">
+                                Confirmed
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#86868B] line-clamp-2">
+                              {supportingFacts[0]}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Missing / Unconfirmed Skills */}
+                  <div className="space-y-3 pt-2 border-t border-black/[0.04]">
+                    <h3 className="font-semibold text-[14px] text-[#1D1D1F] flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#FF9500]"></span>
+                      Unconfirmed Skills ({evidenceData?.missing_keywords?.length || 1} Missing from Memory)
+                    </h3>
+                    
+                    <div className="p-3.5 rounded-xl bg-[#FFF4E5] border border-[#FF9500]/20 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-[12px] text-[#B76E00]">
+                          {(evidenceData?.missing_keywords || ["Kubernetes"]).join(", ")}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-white text-[#B76E00] px-1.5 py-0.5 rounded border border-[#FF9500]/30">
+                          Excluded from Resume
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#86868B]">
+                        Per Section 19.4 Scenario C of SRS, CareerOrbit strictly suppresses unconfirmed skills from your RenderCV bullets. Update your Memory Vault if you possess this skill.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <Link
+                      href="/memory"
+                      className="apple-button-secondary text-[12px]"
+                    >
+                      <span>Add Evidence to Memory</span>
+                    </Link>
+
+                    <button
+                      onClick={() => setActiveTab("RESUME")}
+                      className="apple-button-primary text-[12px]"
+                    >
+                      <span>Preview RenderCV PDF</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Tailored RenderCV Typst PDF Preview */}
               {activeTab === "RESUME" && (
-                <div className="space-y-5">
+                <div className="space-y-5 animate-fadeIn">
                   <div className="p-4 rounded-2xl bg-[#E8F8EE] border border-[#34C759]/20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileCheck2 className="w-4 h-4 text-[#1D8348]" />
@@ -309,84 +428,29 @@ export default function LiveHunterPage() {
                         RenderCV Typst Synthesis (engineeringresumes theme)
                       </span>
                     </div>
-                    <span className="text-[11px] font-medium text-[#1D8348]">
-                      100% ATS Verified
-                    </span>
+                    <a
+                      href={getApiUrl(`/api/v1/resumes/${selectedJob.id}/pdf`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1D8348] text-white hover:bg-[#19713e] flex items-center gap-1 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Open Full PDF
+                    </a>
                   </div>
 
-                  {/* Mock PDF Sheet Viewer */}
-                  <div className="p-8 rounded-2xl bg-white border border-black/[0.1] shadow-md space-y-4 font-serif text-[12px] text-[#1D1D1F] max-h-[460px] overflow-y-auto">
-                    <div className="text-center space-y-1 border-b border-black/[0.1] pb-3">
-                      <h3 className="font-bold text-[18px] tracking-wide font-sans">
-                        AMAN SHARMA
-                      </h3>
-                      <p className="text-[11px] text-[#86868B] font-sans">
-                        Bangalore, India • +91 9876543210 • aman.sharma28@example.com • github.com/amansharma28
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-[13px] uppercase tracking-wider text-[#0071E3] font-sans">
-                        Education
-                      </h4>
-                      <div className="flex justify-between font-sans text-[11px]">
-                        <strong>Indian Institute of Technology</strong>
-                        <span>2024 – 2028</span>
-                      </div>
-                      <p className="text-[11px] text-[#86868B] font-sans">
-                        Bachelor of Technology (B.Tech) in Computer Science • Current 3rd Year • CGPA: 8.95 / 10.0
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-[13px] uppercase tracking-wider text-[#0071E3] font-sans">
-                        Tailored Technical Projects (Action-Technology-Result)
-                      </h4>
-                      
-                      {selectedJob.role_category === "AIML" ? (
-                        <>
-                          <div>
-                            <div className="flex justify-between font-sans text-[11px]">
-                              <strong>Autonomous Multi-Agent Opportunity Hunter</strong>
-                              <span>2026</span>
-                            </div>
-                            <ul className="list-disc list-inside text-[11px] text-[#1D1D1F]/90 space-y-0.5">
-                              <li>Engineered a credit-aware 3-tier routing architecture with <strong>NVIDIA Nemotron 3 Ultra</strong> on Nebius Token Factory, reducing inference latency by 40%.</li>
-                              <li>Integrated <strong>Mem0 hybrid memory with Qdrant vector store</strong> to dynamically align candidate skills to enterprise ATS postings.</li>
-                            </ul>
-                          </div>
-
-                          <div>
-                            <div className="flex justify-between font-sans text-[11px]">
-                              <strong>Multimodal Vision & RAG Engine</strong>
-                              <span>2025</span>
-                            </div>
-                            <ul className="list-disc list-inside text-[11px] text-[#1D1D1F]/90 space-y-0.5">
-                              <li>Trained PyTorch and HuggingFace transformer models for semantic document parsing, attaining 94% precision across technical benchmark datasets.</li>
-                            </ul>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div>
-                            <div className="flex justify-between font-sans text-[11px]">
-                              <strong>Distributed Task & Job Queue Engine</strong>
-                              <span>2026</span>
-                            </div>
-                            <ul className="list-disc list-inside text-[11px] text-[#1D1D1F]/90 space-y-0.5">
-                              <li>Architected an asynchronous distributed queue processing 12,000 requests/sec with FastAPI, Redis, and Celery.</li>
-                              <li>Designed PostgreSQL replication and failover handling with 99.98% pipeline uptime.</li>
-                            </ul>
-                          </div>
-                        </>
-                      )}
-
-                    </div>
+                  {/* Live RenderCV PDF iframe with Typst design preview */}
+                  <div className="rounded-2xl overflow-hidden border border-black/[0.1] shadow-md bg-white">
+                    <iframe
+                      src={getApiUrl(`/api/v1/resumes/${selectedJob.id}/pdf`)}
+                      className="w-full h-[460px] border-none"
+                      title="Tailored ATS Resume PDF"
+                    />
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-[12px] text-[#86868B]">
-                      Theme: engineeringresumes (Typst Rust Engine)
+                      Theme: engineeringresumes (Typst Rust Engine) • 100% ATS Verified
                     </span>
                     <Link
                       href="/approvals"

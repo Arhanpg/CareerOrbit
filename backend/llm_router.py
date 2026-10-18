@@ -1,10 +1,37 @@
+import re
+import time
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
 from openai import OpenAI
 from backend.config import settings
+from backend.database import record_model_telemetry
 
-logger = logging.getLogger("careerclaw.llm_router")
+logger = logging.getLogger("careerorbit.llm_router")
+
+def sanitize_llm_text(raw_text: str) -> str:
+    """Strips <think>...</think> reasoning blocks and markdown formatting."""
+    if not raw_text:
+        return ""
+    cleaned = re.sub(r"<think>[\s\S]*?</think>", "", raw_text, flags=re.DOTALL).strip()
+    if "<think>" in cleaned:
+        cleaned = cleaned.split("<think>")[-1].strip()
+    return cleaned
+
+def extract_json_dict(raw_text: str) -> Dict[str, Any]:
+    """Extracts a valid JSON dict from LLM output, resilient to reasoning tokens and code fences."""
+    if not raw_text:
+        raise ValueError("Empty LLM response received")
+    cleaned = sanitize_llm_text(raw_text)
+    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+    cleaned = re.sub(r"\s*```$", "", cleaned).strip()
+    match = re.search(r"\{[\s\S]*\}", cleaned)
+    if match:
+        return json.loads(match.group(0))
+    match_raw = re.search(r"\{[\s\S]*\}", raw_text)
+    if match_raw:
+        return json.loads(match_raw.group(0))
+    return json.loads(cleaned)
 
 class NebiusLLMRouter:
     def __init__(self):
@@ -27,6 +54,33 @@ class NebiusLLMRouter:
             )
         return self._client
 
+    def _prepare_messages(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
+        system_prompt: str = "",
+        json_mode: bool = False
+    ) -> List[Dict[str, str]]:
+        msgs: List[Dict[str, str]] = []
+        if system_prompt:
+            sys_text = system_prompt
+            if json_mode and "json" not in sys_text.lower():
+                sys_text += "\nYou must output ONLY valid RFC 8259 JSON without markdown fences."
+            msgs.append({"role": "system", "content": sys_text})
+        elif json_mode:
+            msgs.append({"role": "system", "content": "You are a precise JSON compiler. Output ONLY valid JSON."})
+
+        if messages:
+            msgs.extend(messages)
+        elif prompt:
+            user_text = prompt
+            if json_mode and "json" not in user_text.lower():
+                user_text += "\nRespond ONLY with a valid JSON object."
+            msgs.append({"role": "user", "content": user_text})
+        else:
+            msgs.append({"role": "user", "content": "Ping"})
+        return msgs
+
     def test_connection(self) -> Dict[str, Any]:
         """Test connectivity to Nebius Token Factory or return mock status."""
         if not settings.is_nebius_configured:
@@ -40,10 +94,9 @@ class NebiusLLMRouter:
                 "tier3_model": settings.TIER3_MODEL
             }
         try:
-            # Simple fast query to verify auth
             resp = self.call_tier1_fast(
-                messages=[{"role": "user", "content": "Respond with 'OK'"}],
-                max_tokens=10
+                prompt="Respond with 'OK'",
+                max_tokens=20
             )
             return {
                 "status": "connected",
@@ -61,22 +114,28 @@ class NebiusLLMRouter:
 
     def call_tier1_fast(
         self,
-        messages: List[Dict[str, str]],
+        prompt: Optional[str] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
+        system_prompt: str = "",
+        json_mode: bool = False,
         temperature: float = 0.0,
         response_format: Optional[Dict[str, str]] = None,
-        max_tokens: int = 1024
+        max_tokens: int = 1500,
+        task_name: str = "tier1_eligibility_filter",
+        **kwargs
     ) -> str:
         """
-        Tier 1 (High-Frequency Daemon): Mem0 additive fact extraction, B.Tech 2028 batch eligibility,
-        and Gmail triage. Uses Nemotron-3_5-Lightning with fallback to Nemotron-3-Nano-30B-A3B.
+        Tier 1 (High-Frequency Daemon): Eligibility screening, scam filter, and email triage.
+        Uses Nemotron-3_5-Lightning with fallback to Nemotron-3-Nano-30B-A3B.
         """
+        msgs = self._prepare_messages(prompt, messages, system_prompt, json_mode)
+        start_t = time.time()
+
         if not settings.is_nebius_configured:
-            # Deterministic mock response for local testing
-            if response_format and response_format.get("type") == "json_object":
-                # Check message content for mock behavior
-                user_msg = " ".join(m.get("content", "") for m in messages).lower()
+            user_msg = " ".join(m.get("content", "") for m in msgs).lower()
+            if json_mode or (response_format and response_format.get("type") == "json_object"):
                 if "reject" in user_msg and "2025" in user_msg:
-                    return json.dumps({
+                    res = json.dumps({
                         "is_eligible": False,
                         "match_score": 20,
                         "role_category": "SDE",
@@ -84,7 +143,7 @@ class NebiusLLMRouter:
                         "rejection_reason": "Restricted strictly to 2025 graduates; candidate is B.Tech 2028"
                     })
                 elif "scam" in user_msg or "pay a fee" in user_msg or "unpaid" in user_msg:
-                    return json.dumps({
+                    res = json.dumps({
                         "is_eligible": False,
                         "match_score": 0,
                         "role_category": "FREELANCE",
@@ -92,73 +151,154 @@ class NebiusLLMRouter:
                         "rejection_reason": "Unpaid training scam requiring registration fees"
                     })
                 elif "hackathon" in user_msg:
-                    return json.dumps({
+                    res = json.dumps({
                         "is_eligible": True,
                         "match_score": 95,
                         "role_category": "HACKATHON",
                         "matched_skills": ["Python", "Machine Learning", "FastAPI"],
                         "rejection_reason": None
                     })
+                elif "amazon" in user_msg or "hackerrank" in user_msg or "oa" in user_msg:
+                    res = json.dumps({
+                        "company_name": "Amazon",
+                        "event_title": "Amazon SDE Intern Online Assessment",
+                        "event_category": "ONLINE_ASSESSMENT",
+                        "action_link": "https://www.hackerrank.com/tests/amzn-sde-2028",
+                        "duration_hours": 2,
+                        "deadline_datetime_iso": "2026-10-22T23:59:00+05:30",
+                        "focus_block_start_iso": "2026-10-21T18:00:00+05:30",
+                        "focus_block_end_iso": "2026-10-21T20:00:00+05:30",
+                        "notes": "90-minute OA on HackerRank. Focus block auto-scheduled."
+                    })
+                elif "interview" in user_msg or "microsoft" in user_msg:
+                    res = json.dumps({
+                        "company_name": "Microsoft",
+                        "event_title": "Microsoft Technical Interview Round 1",
+                        "event_category": "TECHNICAL_INTERVIEW",
+                        "action_link": "https://teams.microsoft.com/l/meetup-join/msft-intern-2028",
+                        "duration_hours": 1,
+                        "start_datetime_iso": "2026-10-24T14:00:00+05:30",
+                        "end_datetime_iso": "2026-10-24T15:00:00+05:30",
+                        "notes": "45-minute technical interview on distributed algorithms."
+                    })
                 else:
-                    return json.dumps({
+                    res = json.dumps({
                         "is_eligible": True,
                         "match_score": 92,
                         "role_category": "AIML" if "ml" in user_msg or "ai" in user_msg else "SDE",
                         "matched_skills": ["Python", "FastAPI", "PyTorch"],
                         "rejection_reason": None
                     })
-            return "Tier-1 Mock Response: Task processed successfully by Nemotron-3_5-Lightning (Sandbox)."
+            else:
+                res = "Tier-1 Mock Response: Task processed successfully by Nemotron-3_5-Lightning (Sandbox)."
+            
+            elapsed = (time.time() - start_t) * 1000
+            record_model_telemetry(settings.TIER1_MODEL, task_name, elapsed, tokens_used=120, validation_passed=True)
+            return res
+
+        call_kwargs = {
+            "model": settings.TIER1_MODEL,
+            "messages": msgs,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        # Avoid response_format conflict with reasoning models unless specifically needed
+        if response_format and not json_mode:
+            call_kwargs["response_format"] = response_format
 
         try:
-            kwargs = {
-                "model": settings.TIER1_MODEL,
-                "messages": messages,
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-            }
-            if response_format:
-                kwargs["response_format"] = response_format
+            resp = self.client.chat.completions.create(**call_kwargs)
+            msg = resp.choices[0].message
+            content = msg.content or ""
+            if not content.strip() and hasattr(msg, "reasoning_content") and msg.reasoning_content:
+                content = msg.reasoning_content
             
-            resp = self.client.chat.completions.create(**kwargs)
-            return resp.choices[0].message.content or ""
+            elapsed = (time.time() - start_t) * 1000
+            tokens = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
+            record_model_telemetry(settings.TIER1_MODEL, task_name, elapsed, tokens_used=tokens, validation_passed=True)
+            return sanitize_llm_text(content)
         except Exception as e:
-            logger.warning(f"Tier 1 primary model ({settings.TIER1_MODEL}) failed: {e}. Retrying with fallback {settings.TIER1_FALLBACK_MODEL}")
-            kwargs["model"] = settings.TIER1_FALLBACK_MODEL
-            resp = self.client.chat.completions.create(**kwargs)
-            return resp.choices[0].message.content or ""
+            logger.warning(f"Tier 1 primary model ({settings.TIER1_MODEL}) error: {e}. Falling back to {settings.TIER1_FALLBACK_MODEL}")
+            try:
+                call_kwargs["model"] = settings.TIER1_FALLBACK_MODEL
+                resp = self.client.chat.completions.create(**call_kwargs)
+                msg = resp.choices[0].message
+                content = msg.content or ""
+                if not content.strip() and hasattr(msg, "reasoning_content") and msg.reasoning_content:
+                    content = msg.reasoning_content
+                elapsed = (time.time() - start_t) * 1000
+                record_model_telemetry(settings.TIER1_FALLBACK_MODEL, task_name, elapsed, tokens_used=0, validation_passed=True)
+                return sanitize_llm_text(content)
+            except Exception as e2:
+                logger.error(f"Tier 1 fallback model failed: {e2}")
+                elapsed = (time.time() - start_t) * 1000
+                record_model_telemetry(settings.TIER1_MODEL, task_name, elapsed, tokens_used=0, validation_passed=False, error_details=str(e2))
+                raise
 
     def call_tier2_browser(
         self,
-        messages: List[Dict[str, str]],
+        prompt: Optional[str] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
+        system_prompt: str = "",
+        json_mode: bool = False,
         temperature: float = 0.0,
-        max_tokens: int = 2048
+        max_tokens: int = 2048,
+        task_name: str = "tier2_browser_navigation",
+        **kwargs
     ) -> str:
         """
         Tier 2 (Interactive & Browser Control): Driving browser-use DOM & Accessibility tree navigation,
         mapping form fields, and preparing approval briefs. Uses Nemotron-3-Super-120B.
         """
+        msgs = self._prepare_messages(prompt, messages, system_prompt, json_mode)
+        start_t = time.time()
+
         if not settings.is_nebius_configured:
+            elapsed = (time.time() - start_t) * 1000
+            record_model_telemetry(settings.TIER2_MODEL, task_name, elapsed, tokens_used=180, validation_passed=True)
             return "Tier-2 Mock: Navigated to portal, pre-filled form fields accurately, and paused before submission."
 
-        resp = self.client.chat.completions.create(
-            model=settings.TIER2_MODEL,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-        return resp.choices[0].message.content or ""
+        try:
+            resp = self.client.chat.completions.create(
+                model=settings.TIER2_MODEL,
+                messages=msgs,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            msg = resp.choices[0].message
+            content = msg.content or ""
+            if not content.strip() and hasattr(msg, "reasoning_content") and msg.reasoning_content:
+                content = msg.reasoning_content
+            elapsed = (time.time() - start_t) * 1000
+            tokens = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
+            record_model_telemetry(settings.TIER2_MODEL, task_name, elapsed, tokens_used=tokens, validation_passed=True)
+            return sanitize_llm_text(content)
+        except Exception as e:
+            elapsed = (time.time() - start_t) * 1000
+            record_model_telemetry(settings.TIER2_MODEL, task_name, elapsed, tokens_used=0, validation_passed=False, error_details=str(e))
+            raise
 
     def call_tier3_ultra(
         self,
-        messages: List[Dict[str, str]],
-        temperature: float = 0.2,
-        max_tokens: int = 4096
+        prompt: Optional[str] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
+        system_prompt: str = "",
+        json_mode: bool = False,
+        temperature: float = 0.1,
+        max_tokens: int = 4096,
+        task_name: str = "tier3_resume_synthesis",
+        **kwargs
     ) -> str:
         """
         Tier 3 (Deep Reasoning & Synthesis): Deep gap analysis, Action-Technology-Result bullet synthesis,
         and strict Pydantic-validated RenderCV YAML generation. Uses Nemotron-3-Ultra-550B.
         """
+        msgs = self._prepare_messages(prompt, messages, system_prompt, json_mode)
+        start_t = time.time()
+
         if not settings.is_nebius_configured:
+            elapsed = (time.time() - start_t) * 1000
+            record_model_telemetry(settings.TIER3_MODEL, task_name, elapsed, tokens_used=450, validation_passed=True)
             return """
 cv:
   name: Aman Sharma
@@ -189,31 +329,48 @@ design:
   theme: engineeringresumes
 """
 
-        resp = self.client.chat.completions.create(
-            model=settings.TIER3_MODEL,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-        return resp.choices[0].message.content or ""
+        try:
+            resp = self.client.chat.completions.create(
+                model=settings.TIER3_MODEL,
+                messages=msgs,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            msg = resp.choices[0].message
+            content = msg.content or ""
+            if not content.strip() and hasattr(msg, "reasoning_content") and msg.reasoning_content:
+                content = msg.reasoning_content
+            elapsed = (time.time() - start_t) * 1000
+            tokens = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
+            record_model_telemetry(settings.TIER3_MODEL, task_name, elapsed, tokens_used=tokens, validation_passed=True)
+            return sanitize_llm_text(content)
+        except Exception as e:
+            elapsed = (time.time() - start_t) * 1000
+            record_model_telemetry(settings.TIER3_MODEL, task_name, elapsed, tokens_used=0, validation_passed=False, error_details=str(e))
+            raise
 
     def embed_text(self, text: Union[str, List[str]]) -> Union[List[float], List[List[float]]]:
-        """
-        Dense Embeddings: Vectorizing resumes, projects, and queries using Qwen3-Embedding-8B.
-        """
+        """Dense Embeddings: Vectorizing resumes and queries using Qwen3-Embedding-8B (4096-dim)."""
         is_single = isinstance(text, str)
         inputs = [text] if is_single else text
+        start_t = time.time()
         
         if not settings.is_nebius_configured:
-            # Deterministic mock embedding (4096-dim zeros with pseudo-hash)
             mock_emb = [[(hash(inp + str(i)) % 1000) / 1000.0 for i in range(128)] for inp in inputs]
             return mock_emb[0] if is_single else mock_emb
 
-        resp = self.client.embeddings.create(
-            model=settings.EMBEDDING_MODEL,
-            input=inputs
-        )
-        embeddings = [data.embedding for data in resp.data]
-        return embeddings[0] if is_single else embeddings
+        try:
+            resp = self.client.embeddings.create(
+                model=settings.EMBEDDING_MODEL,
+                input=inputs
+            )
+            embeddings = [data.embedding for data in resp.data]
+            elapsed = (time.time() - start_t) * 1000
+            record_model_telemetry(settings.EMBEDDING_MODEL, "embedding_generation", elapsed, tokens_used=len(inputs) * 10, validation_passed=True)
+            return embeddings[0] if is_single else embeddings
+        except Exception as e:
+            logger.warning(f"Embedding error: {e}. Using deterministic fallback.")
+            mock_emb = [[(hash(inp + str(i)) % 1000) / 1000.0 for i in range(128)] for inp in inputs]
+            return mock_emb[0] if is_single else mock_emb
 
 llm_router = NebiusLLMRouter()

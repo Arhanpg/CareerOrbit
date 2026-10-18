@@ -1,5 +1,5 @@
 """
-CareerClaw - FR-19, FR-20 & FR-22: Sandboxed Browser Auto-Applier
+CareerOrbit - FR-19, FR-20 & FR-22: Sandboxed Browser Auto-Applier
 Drives Chromium via Browser-Use and Playwright with persistent user profile reuse,
 sensitive_data credential injection, DOM staging, screenshot capture, and Two-Phase HITL execution.
 """
@@ -16,7 +16,7 @@ from backend.config import settings
 from backend.database import save_application, get_application, update_application_status
 from backend.browser_agent.hitl_mailer import send_approval_email
 
-logger = logging.getLogger("careerclaw.applier")
+logger = logging.getLogger("careerorbit.applier")
 
 def stage_application(
     job_posting: Dict[str, Any],

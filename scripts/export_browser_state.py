@@ -1,5 +1,5 @@
 """
-CareerClaw - FR-18: Persistent Chrome Profile & Storage State Exporter
+CareerOrbit - FR-18: Persistent Chrome Profile & Storage State Exporter
 Allows the student to log in once to Google, LinkedIn, Internshala, Unstop, and Naukri.
 Exports authenticated session cookies and local storage to ./storage/storage_state.json
 so the 24/7 background agent stays logged in continuously without re-triggering bot detection.
@@ -25,7 +25,7 @@ def export_browser_state(headless: bool = False, non_interactive: bool = False):
     settings.CHROME_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     
     print("\n" + "=" * 65)
-    print("  CareerClaw: Persistent Browser Authentication Manager")
+    print("  CareerOrbit: Persistent Browser Authentication Manager")
     print("=" * 65)
     print(f"Profile Directory: {settings.CHROME_PROFILE_DIR}")
     print(f"Target Output:    {settings.STORAGE_STATE_PATH}")
@@ -47,7 +47,7 @@ def export_browser_state(headless: bool = False, non_interactive: bool = False):
         if non_interactive:
             # Used for CI / automated verification
             print("[INFO] Running in non-interactive mode. Generating valid baseline state...")
-            page.goto("data:text/html,<html><head><title>CareerClaw Session</title></head><body><h1>CareerClaw Session Initialized</h1></body></html>")
+            page.goto("data:text/html,<html><head><title>CareerOrbit Session</title></head><body><h1>CareerOrbit Session Initialized</h1></body></html>")
             context.storage_state(path=str(settings.STORAGE_STATE_PATH))
             context.close()
             print(f"[SUCCESS] Staged session state written to {settings.STORAGE_STATE_PATH}")
@@ -84,7 +84,7 @@ def export_browser_state(headless: bool = False, non_interactive: bool = False):
         return str(settings.STORAGE_STATE_PATH)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Export authenticated browser state for CareerClaw 24/7 Agent.")
+    parser = argparse.ArgumentParser(description="Export authenticated browser state for CareerOrbit 24/7 Agent.")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode.")
     parser.add_argument("--test", action="store_true", help="Non-interactive test mode for automated verification.")
     args = parser.parse_args()

@@ -1,1 +1,1 @@
-# CareerClaw Inbox & Google Calendar Auto-Scheduler Package
+# CareerOrbit Inbox & Google Calendar Auto-Scheduler Package

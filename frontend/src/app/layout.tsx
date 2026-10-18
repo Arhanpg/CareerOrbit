@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CareerClaw | Autonomous AI Career Agent (B.Tech 2028)",
+  title: "CareerOrbit — Personal AI Career Agent (B.Tech 2028)",
   description: "Autonomous Student Opportunity Hunter, Dynamic ATS Resume Compiler, HITL Browser Applier, and Inbox-to-Calendar Sync powered by NVIDIA Nemotron on Nebius Token Factory.",
 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({
         <footer className="w-full border-t border-black/[0.06] bg-white/50 py-6 text-center text-[13px] text-[#86868B]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p>
-              CareerClaw — Engineered for the <strong>Nebius x NVIDIA Global AI Hackathon</strong>. Open Source (MIT License).
+              CareerOrbit — Engineered for the <strong>Nebius x NVIDIA Global AI Hackathon</strong>. Open Source (MIT License).
             </p>
             <div className="flex items-center gap-4 text-[12px]">
               <span className="flex items-center gap-1.5">

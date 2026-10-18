@@ -1,5 +1,5 @@
 """
-CareerClaw - FR-21 & FR-22: Two-Phase Human-in-the-Loop (HITL) Mailer
+CareerOrbit - FR-21 & FR-22: Two-Phase Human-in-the-Loop (HITL) Mailer
 Generates tamper-proof HS256 JWT action links (Approve, Improve, Reject)
 and dispatches rich Apple Light-Mode HTML emails with verification screenshots and tailored PDFs.
 """
@@ -17,7 +17,7 @@ import jwt
 
 from backend.config import settings
 
-logger = logging.getLogger("careerclaw.hitl_mailer")
+logger = logging.getLogger("careerorbit.hitl_mailer")
 
 def generate_hitl_tokens(application_id: str, user_id: str = "default_user", expires_in_seconds: int = 86400) -> Dict[str, str]:
     """
@@ -93,7 +93,7 @@ def build_apple_light_email_html(
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td>
-                    <span style="font-size:12px; font-weight:700; color:#0071E3; text-transform:uppercase; letter-spacing:0.08em;">CareerClaw • HITL Approval Gate</span>
+                    <span style="font-size:12px; font-weight:700; color:#0071E3; text-transform:uppercase; letter-spacing:0.08em;">CareerOrbit • HITL Approval Gate</span>
                     <h1 style="font-size:22px; font-weight:700; margin:6px 0 0 0; color:#1D1D1F;">Review Pre-Filled Application</h1>
                   </td>
                   <td align="right">
