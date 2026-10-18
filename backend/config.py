@@ -33,6 +33,10 @@ class Settings:
     # Storage and DB
     STORAGE_DIR: Path = Path(os.getenv("STORAGE_DIR", str(BACKEND_DIR / "storage")))
     SQLITE_DB_PATH: Path = Path(os.getenv("SQLITE_DB_PATH", str(BACKEND_DIR / "storage" / "careerclaw.db")))
+    CHROME_PROFILE_DIR: Path = Path(os.getenv("CHROME_PROFILE_DIR", str(BACKEND_DIR / "storage" / "chrome_profile")))
+    STORAGE_STATE_PATH: Path = Path(os.getenv("STORAGE_STATE_PATH", str(BACKEND_DIR / "storage" / "storage_state.json")))
+    SCREENSHOTS_DIR: Path = Path(os.getenv("SCREENSHOTS_DIR", str(BACKEND_DIR / "storage" / "screenshots")))
+    BU_CDP_URL: str = os.getenv("BU_CDP_URL", "")
     
     # Email / SMTP
     SMTP_EMAIL: str = os.getenv("SMTP_EMAIL", "")

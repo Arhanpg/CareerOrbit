@@ -8,6 +8,8 @@ from backend.api.profile import router as profile_router
 from backend.api.memory import router as memory_router
 from backend.api.hunter import router as hunter_router
 from backend.api.resumes import router as resumes_router
+from backend.api.applications import router as applications_router
+from backend.api.mock_portal import router as mock_portal_router
 from backend.discovery.coordinator import start_discovery_scheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -43,6 +45,8 @@ app.include_router(profile_router)
 app.include_router(memory_router)
 app.include_router(hunter_router)
 app.include_router(resumes_router)
+app.include_router(applications_router)
+app.include_router(mock_portal_router)
 
 @app.get("/")
 def root():

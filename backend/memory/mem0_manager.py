@@ -94,7 +94,6 @@ class CareerMemoryManager:
             except Exception as e:
                 logger.error(f"Mem0 live add failed: {e}. Falling back to local storage.")
 
-        # Local fallback store
         mem_id = self._save_to_local_store(content, user_id, category, source, meta)
         return {
             "status": "success",
@@ -103,6 +102,10 @@ class CareerMemoryManager:
             "category": category,
             "content": content
         }
+
+    def chat_update(self, user_id: str, user_text: str) -> Dict[str, Any]:
+        """Convenience method for conversational memory updates."""
+        return self.add_memory(content=user_text, user_id=user_id, metadata={"source": "chat_update"})
 
     def _save_to_local_store(self, content: str, user_id: str, category: str, source: str, meta: dict) -> str:
         self._ensure_fallback_table()

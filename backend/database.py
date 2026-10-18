@@ -119,5 +119,90 @@ def get_candidate_constraints(profile_id: str = "default_user") -> Optional[Dict
         return json.loads(row["data_json"])
     return None
 
+def save_application(app_data: Dict[str, Any]):
+    ensure_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO applications (
+            id, job_id, company, role_title, portal_url, status,
+            tailored_pdf_path, staged_screenshot_path, cached_dom_actions, improve_notes, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(id) DO UPDATE SET
+            status = excluded.status,
+            tailored_pdf_path = COALESCE(excluded.tailored_pdf_path, applications.tailored_pdf_path),
+            staged_screenshot_path = COALESCE(excluded.staged_screenshot_path, applications.staged_screenshot_path),
+            cached_dom_actions = COALESCE(excluded.cached_dom_actions, applications.cached_dom_actions),
+            improve_notes = COALESCE(excluded.improve_notes, applications.improve_notes),
+            updated_at = CURRENT_TIMESTAMP
+    """, (
+        app_data["id"],
+        app_data.get("job_id"),
+        app_data.get("company", "Company"),
+        app_data.get("role_title", "Role"),
+        app_data.get("portal_url", ""),
+        app_data.get("status", "STAGED_FOR_APPROVAL"),
+        app_data.get("tailored_pdf_path"),
+        app_data.get("staged_screenshot_path"),
+        json.dumps(app_data.get("cached_dom_actions", {})) if isinstance(app_data.get("cached_dom_actions"), (dict, list)) else app_data.get("cached_dom_actions"),
+        app_data.get("improve_notes"),
+    ))
+    conn.commit()
+    conn.close()
+
+def get_application(app_id: str) -> Optional[Dict[str, Any]]:
+    ensure_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM applications WHERE id = ?", (app_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        d = dict(row)
+        if d.get("cached_dom_actions"):
+            try:
+                d["cached_dom_actions"] = json.loads(d["cached_dom_actions"])
+            except Exception:
+                pass
+        return d
+    return None
+
+def update_application_status(app_id: str, status: str, screenshot_path: Optional[str] = None, notes: Optional[str] = None):
+    ensure_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if screenshot_path and notes:
+        cursor.execute("UPDATE applications SET status = ?, staged_screenshot_path = ?, improve_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (status, screenshot_path, notes, app_id))
+    elif screenshot_path:
+        cursor.execute("UPDATE applications SET status = ?, staged_screenshot_path = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (status, screenshot_path, app_id))
+    elif notes:
+        cursor.execute("UPDATE applications SET status = ?, improve_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (status, notes, app_id))
+    else:
+        cursor.execute("UPDATE applications SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (status, app_id))
+    conn.commit()
+    conn.close()
+
+def list_applications(status: Optional[str] = None) -> List[Dict[str, Any]]:
+    ensure_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if status:
+        cursor.execute("SELECT * FROM applications WHERE status = ? ORDER BY updated_at DESC", (status,))
+    else:
+        cursor.execute("SELECT * FROM applications ORDER BY updated_at DESC")
+    rows = cursor.fetchall()
+    conn.close()
+    result = []
+    for r in rows:
+        d = dict(r)
+        if d.get("cached_dom_actions"):
+            try:
+                d["cached_dom_actions"] = json.loads(d["cached_dom_actions"])
+            except Exception:
+                pass
+        result.append(d)
+    return result
+
 # Ensure DB on import
 ensure_db()
