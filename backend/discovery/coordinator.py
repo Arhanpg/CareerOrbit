@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import logging
@@ -185,8 +186,24 @@ def get_discovered_jobs(only_eligible: bool = True) -> List[Dict[str, Any]]:
     finally:
         conn.close()
 
+def keep_render_awake():
+    """
+    Pings the public Render backend URL every 10 minutes over HTTPS.
+    Resets Render Free Tier's 15-minute inactivity shutdown timer so the container
+    stays warm and active 24/7 without requiring the student's laptop to be powered on.
+    """
+    public_url = os.getenv("BACKEND_PUBLIC_URL") or os.getenv("RENDER_EXTERNAL_URL") or "https://careerorbit-s1ar.onrender.com"
+    health_endpoint = f"{public_url.rstrip('/')}/health"
+    try:
+        import httpx
+        with httpx.Client(timeout=8.0) as client:
+            resp = client.get(health_endpoint)
+            logger.info(f"Keep-alive self-ping to {health_endpoint} returned {resp.status_code}")
+    except Exception as e:
+        logger.debug(f"Keep-alive self-ping notice ({health_endpoint}): {e}")
+
 def start_discovery_scheduler():
-    """Initializes APScheduler 60-minute loop for 24/7 background hunting."""
+    """Initializes APScheduler loops for 24/7 background hunting and 10-minute keep-alive."""
     if not scheduler.running:
         scheduler.add_job(
             run_discovery_cycle,
@@ -195,5 +212,12 @@ def start_discovery_scheduler():
             id="autonomous_opportunity_hunter",
             replace_existing=True
         )
+        scheduler.add_job(
+            keep_render_awake,
+            "interval",
+            minutes=10,
+            id="render_24_7_keep_awake",
+            replace_existing=True
+        )
         scheduler.start()
-        logger.info("24/7 Autonomous Opportunity Hunter APScheduler started (runs every 60 mins).")
+        logger.info("24/7 Autonomous Opportunity Hunter & Keep-Alive APScheduler started.")

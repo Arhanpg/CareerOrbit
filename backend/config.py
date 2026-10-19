@@ -27,8 +27,17 @@ class Settings:
     
     # HITL Security & App URLs
     HITL_JWT_SECRET: str = os.getenv("HITL_JWT_SECRET", "careerorbit-secure-jwt-key-2026")
+    BACKEND_PUBLIC_URL: str = os.getenv("BACKEND_PUBLIC_URL") or os.getenv("RENDER_EXTERNAL_URL") or "https://careerorbit-s1ar.onrender.com"
+    FRONTEND_PUBLIC_URL: str = os.getenv("FRONTEND_PUBLIC_URL") or "https://careerorbit.vercel.app"
     APP_BASE_URL: str = os.getenv("APP_BASE_URL", "http://localhost:3000")
     API_BASE_URL: str = os.getenv("API_BASE_URL", "http://localhost:8000")
+    
+    # HTTPS Email Delivery (Port 443 - Never Blocked by Render)
+    GMAIL_WEBHOOK_URL: str = os.getenv("GMAIL_WEBHOOK_URL", "")
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    BREVO_API_KEY: str = os.getenv("BREVO_API_KEY", "")
+    PORTAL_EMAIL: str = os.getenv("PORTAL_EMAIL", "arhanghosarwade05@gmail.com")
+    PORTAL_PASSWORD: str = os.getenv("PORTAL_PASSWORD", "")
     
     # Storage and DB
     STORAGE_DIR: Path = Path(os.getenv("STORAGE_DIR", str(BACKEND_DIR / "storage")))
@@ -38,7 +47,7 @@ class Settings:
     SCREENSHOTS_DIR: Path = Path(os.getenv("SCREENSHOTS_DIR", str(BACKEND_DIR / "storage" / "screenshots")))
     BU_CDP_URL: str = os.getenv("BU_CDP_URL", "")
     
-    # Email / SMTP
+    # Email / SMTP Fallback
     SMTP_EMAIL: str = os.getenv("SMTP_EMAIL", "")
     SMTP_APP_PASSWORD: str = os.getenv("SMTP_APP_PASSWORD", "")
     

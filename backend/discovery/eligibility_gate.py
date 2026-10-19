@@ -100,12 +100,14 @@ Output strict JSON:
                 prompt=prompt,
                 json_mode=True,
                 temperature=0.0,
-                max_tokens=1024,
+                max_tokens=1500,
                 task_name="eligibility_evaluation"
             )
-            return extract_json_dict(resp_str)
+            parsed = extract_json_dict(resp_str)
+            if isinstance(parsed, dict) and "is_eligible" in parsed:
+                return parsed
         except Exception as e:
-            logger.warning(f"Nemotron 3.5 Lightning live note: {e}. Using deterministic evaluation.")
+            logger.debug(f"Nemotron 3.5 live note: {e}. Using deterministic evaluation.")
 
     # High match detection for hackathons
     if "hackathon" in title_lower or "hackathon" in desc_lower or "challenge" in title_lower:

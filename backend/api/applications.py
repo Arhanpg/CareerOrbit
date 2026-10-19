@@ -54,11 +54,13 @@ def get_application_by_id(app_id: str):
     return app
 
 @router.post("/applications/stage")
-def trigger_stage_application(payload: StageApplicationRequest):
+def trigger_stage_application(payload: StageApplicationRequest, request: Request):
     """
     FR-020: Triggers browser agent to stage form, attach PDF, pause before Submit,
     and send the cryptographic approval email.
     """
+    frontend_url = request.headers.get("origin") or request.headers.get("referer") or settings.FRONTEND_PUBLIC_URL
+
     job_record = None
     if payload.job_id:
         conn = get_raw_connection()
@@ -72,15 +74,25 @@ def trigger_stage_application(payload: StageApplicationRequest):
             conn.close()
 
     if not job_record:
+        target_url = payload.portal_url
+        if not target_url or payload.job_id in ["job_adobe_demo", "job_adobe_aiml_2028"]:
+            target_url = f"{settings.API_BASE_URL}/mock-portals/adobe-aiml-intern-2028"
+
         job_record = {
             "id": payload.job_id or "job_adobe_demo",
             "company": payload.company,
             "title": payload.role_title,
             "role_title": payload.role_title,
-            "url": payload.portal_url or f"{settings.API_BASE_URL}/mock-portals/adobe-aiml-intern-2028",
+            "url": target_url,
             "role_category": "AIML",
             "description": "Looking for B.Tech interns with Python, PyTorch, and distributed systems skills."
         }
+    else:
+        # Preserve actual job URL unless explicitly overridden or empty
+        if payload.portal_url:
+            job_record["url"] = payload.portal_url
+        elif not job_record.get("url"):
+            job_record["url"] = f"{settings.API_BASE_URL}/mock-portals/adobe-aiml-intern-2028"
 
     profile = get_candidate_constraints(payload.user_id) or {
         "full_name": "Arhan Praveen Ghosarwade",
@@ -110,7 +122,8 @@ def trigger_stage_application(payload: StageApplicationRequest):
     staging_res = stage_application(
         job_posting=job_record,
         candidate_profile=profile,
-        tailored_pdf_path=pdf_path
+        tailored_pdf_path=pdf_path,
+        frontend_url=frontend_url
     )
 
     return staging_res
@@ -317,14 +330,56 @@ def handle_hitl_decision_get(request: Request, token: str = Query(...), confirm:
     except Exception as e:
         return HTMLResponse(content=f"<h2>Submission error: {e}</h2>", status_code=500)
 
-@router.post("/applications/{app_id}/approve")
-def approve_application_direct(app_id: str):
-    """Direct one-click approval from the Web Control Plane."""
+@router.get("/applications/{app_id}/submission-email-preview", response_class=HTMLResponse)
+def get_submission_email_preview(app_id: str):
+    """
+    Renders the official Application Submitted Confirmation Receipt email for this application.
+    Enables instant inspection in browser without requiring external email client.
+    """
     app = get_application(app_id)
     if not app:
         raise HTTPException(status_code=404, detail="Application not found.")
-    if app.get("consumed_at"):
-        raise HTTPException(status_code=409, detail="Approval token already consumed.")
+
+    draft_path = settings.STORAGE_DIR / "emails" / f"submission_{app_id}.html"
+    if draft_path.exists():
+        return HTMLResponse(content=draft_path.read_text(encoding="utf-8"))
+
+    from backend.browser_agent.hitl_mailer import build_submission_confirmation_html
+    from datetime import datetime, timezone, timedelta
+    ist = timezone(timedelta(hours=5, minutes=30))
+    submitted_at = datetime.now(ist).strftime("%d %b %Y, %I:%M %p IST")
+
+    html = build_submission_confirmation_html(
+        job_details=app,
+        receipt_id=f"REC-{app_id[-8:].upper()}",
+        submitted_at=submitted_at,
+        portal_url=app.get("portal_url", "#"),
+        screenshot_url=app.get("staged_screenshot_path")
+    )
+    return HTMLResponse(content=html)
+
+@router.post("/applications/{app_id}/approve")
+def approve_application_direct(app_id: str):
+    """Direct one-click approval from the Web Control Plane (idempotent for UI)."""
+    app = get_application(app_id)
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    
+    # Idempotent return if already approved/submitted
+    if app.get("consumed_at") or app.get("status") == "APPROVED_SUBMITTED":
+        return {
+            "status": "APPROVED_SUBMITTED",
+            "app_id": app_id,
+            "already_approved": True,
+            "message": "Application has already been approved and submitted.",
+            "submission_result": {
+                "status": "APPROVED_SUBMITTED",
+                "application_id": app_id,
+                "company": app.get("company"),
+                "role_title": app.get("role_title"),
+                "confirmation_screenshot": app.get("staged_screenshot_path")
+            }
+        }
 
     sub_res = submit_staged_application(app_id)
     update_application_status(

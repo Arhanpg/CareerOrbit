@@ -1,0 +1,22 @@
+name: CareerOrbit Render 24/7 Keep-Alive
+
+on:
+  schedule:
+    # Ping every 12 minutes to beat Render's 15-minute inactivity shutdown
+    - cron: "*/12 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping CareerOrbit Health Endpoint
+        run: |
+          echo "Pinging https://careerorbit-s1ar.onrender.com/health..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://careerorbit-s1ar.onrender.com/health || echo "000")
+          echo "Response HTTP Status: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+            echo "CareerOrbit backend is live and healthy."
+          else
+            echo "Notice: Status is $STATUS, waking container."
+          fi

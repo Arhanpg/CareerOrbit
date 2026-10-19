@@ -45,6 +45,7 @@ export default function ApprovalsPage() {
   const [improveText, setImproveText] = useState("");
   const [showImproveModal, setShowImproveModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Fetch applications
@@ -115,16 +116,16 @@ export default function ApprovalsPage() {
   // One-click Approve & Submit
   const handleApprove = async (appId: string) => {
     setActionLoading(true);
-    setStatusMessage("Replaying browser actions & clicking final Submit...");
+    setStatusMessage("Approving & Submitting via Browser Agent...");
     try {
       const res = await fetch(getApiUrl(`/api/v1/applications/${appId}/approve`), {
         method: "POST"
       });
       if (res.ok) {
-        setStatusMessage("Application Approved and Submitted!");
+        setStatusMessage("Application Approved and Submitted! Official receipt dispatched.");
       } else {
         const data = await res.json().catch(() => ({}));
-        setStatusMessage(data.detail || "Approval processed.");
+        setStatusMessage(data.detail || data.message || "Approval processed.");
       }
       await fetchApplications();
     } catch (err) {
@@ -433,45 +434,79 @@ export default function ApprovalsPage() {
 
                 {/* Action Controls Deck */}
                 <div className="space-y-3 pt-2">
-                  <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <button
-                      onClick={() => handleApprove(selectedApp.id)}
-                      disabled={actionLoading || selectedApp.status === "APPROVED_SUBMITTED"}
-                      className="w-full sm:flex-1 py-3 px-6 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white font-semibold text-sm transition-all shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <Check className="w-4 h-4" />
-                      Approve &amp; Submit Application Now
-                    </button>
+                  {selectedApp.status === "APPROVED_SUBMITTED" ? (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-2xl bg-[#E8F8EE] border border-[#34C759]/25 text-[#1D8348] text-xs font-medium flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-[#34C759]" />
+                          Application Submitted &amp; Verified on Company Portal
+                        </span>
+                        <span className="text-[11px] font-semibold bg-white px-2 py-0.5 rounded-full border border-[#34C759]/20">
+                          Receipt Dispatched
+                        </span>
+                      </div>
 
-                    <button
-                      onClick={() => setShowEmailModal(true)}
-                      className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
-                    >
-                      <Mail className="w-4 h-4 text-[#0071E3]" />
-                      View Email
-                    </button>
+                      <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <button
+                          onClick={() => setShowReceiptModal(true)}
+                          className="w-full sm:flex-1 py-3 px-6 rounded-full bg-[#34C759] hover:bg-[#2DB84D] text-white font-semibold text-sm transition-all shadow-md shadow-green-500/25 flex items-center justify-center gap-2"
+                        >
+                          <Mail className="w-4 h-4" />
+                          View Submission Receipt Email
+                        </button>
 
-                    <button
-                      onClick={() => setShowImproveModal(true)}
-                      disabled={actionLoading}
-                      className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
-                    >
-                      <RotateCcw className="w-4 h-4 text-[#86868B]" />
-                      Improve
-                    </button>
+                        <a
+                          href={selectedApp.portal_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full sm:w-auto py-3 px-5 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                        >
+                          <ExternalLink className="w-4 h-4 text-[#0071E3]" />
+                          Open Company Portal ↗
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <button
+                        onClick={() => handleApprove(selectedApp.id)}
+                        disabled={actionLoading}
+                        className="w-full sm:flex-1 py-3 px-6 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white font-semibold text-sm transition-all shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <Check className="w-4 h-4" />
+                        {actionLoading ? "Approving & Submitting via Browser Agent..." : "Approve & Submit Application Now"}
+                      </button>
 
-                    <button
-                      onClick={() => handleReject(selectedApp.id)}
-                      disabled={actionLoading || selectedApp.status === "REJECTED_BY_USER"}
-                      className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-red-50 border border-red-200 text-red-600 font-semibold text-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
-                    >
-                      <X className="w-4 h-4 text-red-500" />
-                      Reject
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => setShowEmailModal(true)}
+                        className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                      >
+                        <Mail className="w-4 h-4 text-[#0071E3]" />
+                        View Email
+                      </button>
+
+                      <button
+                        onClick={() => setShowImproveModal(true)}
+                        disabled={actionLoading}
+                        className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                      >
+                        <RotateCcw className="w-4 h-4 text-[#86868B]" />
+                        Improve
+                      </button>
+
+                      <button
+                        onClick={() => handleReject(selectedApp.id)}
+                        disabled={actionLoading || selectedApp.status === "REJECTED_BY_USER"}
+                        className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-red-50 border border-red-200 text-red-600 font-semibold text-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        <X className="w-4 h-4 text-red-500" />
+                        Reject
+                      </button>
+                    </div>
+                  )}
 
                   <p className="text-[11px] text-[#86868B] text-center">
-                    A cryptographic approval email with 24-hour expiration tokens was sent to the candidate inbox.
+                    Cryptographic HITL verification &bull; Real Chromium execution across company portal &bull; Zero localhost links
                   </p>
                 </div>
 
@@ -590,6 +625,65 @@ export default function ApprovalsPage() {
                 className="px-5 py-2 rounded-full bg-[#F5F5F7] hover:bg-[#E8E8ED] text-xs font-semibold text-[#1D1D1F]"
               >
                 Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submission Confirmation Receipt Modal */}
+      {showReceiptModal && selectedApp && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-black/[0.08] flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#34C759]/10 flex items-center justify-center text-[#34C759]">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1D1D1F]">
+                    Application Submitted Confirmation Receipt
+                  </h3>
+                  <span className="text-[11px] text-[#86868B]">
+                    {selectedApp.company} &bull; Dispatched via CareerOrbit Agent
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/submission-email-preview`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-[#0071E3] hover:underline flex items-center gap-1 font-medium"
+                >
+                  Open in New Window <ExternalLink className="w-3 h-3" />
+                </a>
+                <button
+                  onClick={() => setShowReceiptModal(false)}
+                  className="text-[#86868B] hover:text-[#1D1D1F] p-1 rounded-full hover:bg-[#F5F5F7]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden my-4 rounded-2xl border border-black/[0.08] bg-[#F5F5F7]">
+              <iframe
+                src={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/submission-email-preview`}
+                className="w-full h-[55vh] border-0"
+                title="Submission Receipt Email Preview"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-black/[0.06]">
+              <span className="text-[11px] text-[#86868B]">
+                Official submission confirmation sent to candidate email.
+              </span>
+              <button
+                onClick={() => setShowReceiptModal(false)}
+                className="px-5 py-2 rounded-full bg-[#F5F5F7] hover:bg-[#E8E8ED] text-xs font-semibold text-[#1D1D1F]"
+              >
+                Close Receipt
               </button>
             </div>
           </div>
