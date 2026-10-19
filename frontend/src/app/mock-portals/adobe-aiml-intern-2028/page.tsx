@@ -8,14 +8,15 @@ import { getApiUrl } from "@/lib/api";
 
 export default function MockAdobePortalPage() {
   const [formData, setFormData] = useState({
-    full_name: "Aman Sharma",
-    email: "aman.sharma28@example.com",
-    phone: "+91 9876543210",
+    full_name: "Arhan Praveen Ghosarwade",
+    email: "arhanghosarwade05@gmail.com",
+    phone: "+91 6366616225",
+    institution: "Indian Institute of Information Technology (IIIT) Dharwad",
     degree: "B.Tech Computer Science and Engineering",
     graduation_batch: "2028",
-    cgpa: "8.95",
-    github_url: "https://github.com/amansharma28",
-    linkedin_url: "https://linkedin.com/in/amansharma28"
+    cgpa: "8.69",
+    github_url: "https://github.com/Arhanpg",
+    linkedin_url: "https://www.linkedin.com/in/arhan-ghosarwade-78bb16324"
   });
 
   const [submitted, setSubmitted] = useState(false);

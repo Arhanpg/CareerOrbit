@@ -6,22 +6,44 @@ class CandidateHardConstraints(BaseModel):
     full_name: str = Field(..., min_length=2, description="Candidate's full legal name")
     email: EmailStr = Field(..., description="Primary contact email")
     phone: str = Field(..., min_length=8, description="Contact phone number with country code")
-    current_location: str = Field(default="India")
-    degree: str = Field(default="B.Tech", description="Academic degree, e.g. B.Tech / B.E.")
+    institution: str = Field(
+        default="Indian Institute of Information Technology (IIIT) Dharwad",
+        description="Educational institution / university"
+    )
+    current_location: str = Field(default="Dharwad, Karnataka, India")
+    degree: str = Field(default="B.Tech in Computer Science and Engineering", description="Academic degree, e.g. B.Tech / B.E.")
     graduation_batch: int = Field(default=2028, description="Graduation year (target 2028 batch)")
-    current_academic_year: str = Field(default="3rd Year", description="Current academic year")
+    current_academic_year: str = Field(default="3rd Year (2024 – 2028)", description="Current academic year")
     cgpa: float = Field(..., ge=0.0, le=10.0, description="Current CGPA on 10.0 scale")
     target_roles: List[str] = Field(
-        default=["SDE Intern", "AI/ML Intern", "Backend Developer", "Freelance", "Hackathon"]
+        default=["SDE Intern", "AI/ML Intern", "Backend Developer", "GenAI / Agentic AI", "Hackathon"]
     )
     allowed_locations: List[str] = Field(
-        default=["India", "Remote", "Bangalore", "Hyderabad", "Pune", "Gurgaon", "Noida"]
+        default=["India", "Remote", "Bangalore", "Hyderabad", "Pune", "Dharwad"]
     )
     github_url: str = Field(..., description="GitHub profile URL")
     linkedin_url: str = Field(..., description="LinkedIn profile URL")
     portfolio_url: Optional[str] = None
-    address_line: str = Field(default="Koramangala, 5th Block, Bangalore", description="Residential street address")
-    postal_code: str = Field(default="560095", description="Postal PIN / Zip code")
+    address_line: str = Field(default="IIIT Dharwad Campus, Ittigatti Road", description="Residential street address")
+    postal_code: str = Field(default="580009", description="Postal PIN / Zip code")
+
+    @field_validator("phone")
+    @classmethod
+    def normalize_phone(cls, v: str) -> str:
+        import re
+        cleaned = re.sub(r"[^\d+]", "", str(v).strip())
+        digits = re.sub(r"\D", "", cleaned)
+        if cleaned.startswith("+91") and len(digits) >= 12:
+            return f"+91 {digits[-10:]}"
+        elif len(digits) == 10:
+            return f"+91 {digits}"
+        elif len(digits) == 11 and digits.startswith("0"):
+            return f"+91 {digits[1:]}"
+        elif len(digits) == 12 and digits.startswith("91"):
+            return f"+91 {digits[2:]}"
+        elif cleaned.startswith("+"):
+            return cleaned
+        return f"+91 {digits}" if digits else "+91 6366616225"
 
     @field_validator("graduation_batch")
     @classmethod

@@ -52,14 +52,15 @@ async def compile_resume_for_job(payload: CompileResumeRequest):
         }
 
     profile = get_candidate_constraints(payload.user_id) or {
-        "full_name": "Aman Sharma",
-        "email": "aman.sharma28@example.com",
-        "phone": "+91 9876543210",
-        "current_location": "India",
-        "degree": "B.Tech",
+        "full_name": "Arhan Praveen Ghosarwade",
+        "email": "arhanghosarwade05@gmail.com",
+        "phone": "+91 6366616225",
+        "institution": "Indian Institute of Information Technology (IIIT) Dharwad",
+        "current_location": "Dharwad, Karnataka, India",
+        "degree": "B.Tech in Computer Science and Engineering",
         "graduation_batch": 2028,
-        "current_academic_year": "3rd Year",
-        "cgpa": 8.95
+        "current_academic_year": "3rd Year (2024 – 2028)",
+        "cgpa": 8.69
     }
 
     memories = memory_manager.search_memory(
@@ -133,14 +134,15 @@ async def get_compiled_pdf(job_id: str):
         "description": row["description"] if row else "Software Engineering and AI/ML internship opportunities for B.Tech 2028."
     }
     profile = get_candidate_constraints("default_user") or {
-        "full_name": "Aman Sharma",
-        "email": "aman.sharma28@example.com",
-        "phone": "+91 9876543210",
-        "current_location": "Bangalore, India",
-        "degree": "B.Tech",
+        "full_name": "Arhan Praveen Ghosarwade",
+        "email": "arhanghosarwade05@gmail.com",
+        "phone": "+91 6366616225",
+        "institution": "Indian Institute of Information Technology (IIIT) Dharwad",
+        "current_location": "Dharwad, Karnataka, India",
+        "degree": "B.Tech in Computer Science and Engineering",
         "graduation_batch": 2028,
-        "current_academic_year": "3rd Year",
-        "cgpa": 8.95
+        "current_academic_year": "3rd Year (2024 – 2028)",
+        "cgpa": 8.69
     }
     memories = memory_manager.search_memory(
         query=f"{job_record['title']} {job_record['description']}",

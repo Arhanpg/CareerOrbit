@@ -11,21 +11,22 @@ def get_constraints(profile_id: str = "default_user"):
     if not saved:
         # Return default recommended B.Tech 2028 profile
         default_profile = CandidateHardConstraints(
-            full_name="Aman Sharma",
-            email="aman.sharma28@example.com",
-            phone="+91 9876543210",
-            current_location="India",
-            degree="B.Tech",
+            full_name="Arhan Praveen Ghosarwade",
+            email="arhanghosarwade05@gmail.com",
+            phone="+91 6366616225",
+            institution="Indian Institute of Information Technology (IIIT) Dharwad",
+            current_location="Dharwad, Karnataka, India",
+            degree="B.Tech in Computer Science and Engineering",
             graduation_batch=2028,
-            current_academic_year="3rd Year",
-            cgpa=8.95,
-            target_roles=["SDE Intern", "AI/ML Intern", "Backend Developer", "Hackathon"],
-            allowed_locations=["India", "Remote", "Bangalore", "Hyderabad", "Pune"],
-            github_url="https://github.com/amansharma28",
-            linkedin_url="https://linkedin.com/in/amansharma28",
-            portfolio_url="https://amansharma.dev",
-            address_line="Koramangala 4th Block, Bangalore",
-            postal_code="560034"
+            current_academic_year="3rd Year (2024 – 2028)",
+            cgpa=8.69,
+            target_roles=["SDE Intern", "AI/ML Intern", "Backend Developer", "GenAI / Agentic AI", "Hackathon"],
+            allowed_locations=["India", "Remote", "Bangalore", "Hyderabad", "Pune", "Dharwad"],
+            github_url="https://github.com/Arhanpg",
+            linkedin_url="https://www.linkedin.com/in/arhan-ghosarwade-78bb16324",
+            portfolio_url="https://github.com/Arhanpg",
+            address_line="IIIT Dharwad Campus, Ittigatti Road",
+            postal_code="580009"
         )
         save_candidate_constraints(profile_id, default_profile.model_dump())
         return default_profile

@@ -13,6 +13,37 @@ from backend.database import get_raw_connection, db_transaction
 
 logger = logging.getLogger("careerorbit.mem0_manager")
 
+def clean_extracted_pdf_text(text: str) -> str:
+    """Strips LaTeX glyphs, control characters, fixes broken kerning, and normalizes line breaks."""
+    if not text:
+        return ""
+    # Strip garbled/control characters & bullets
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\uf0b7\u2022\u25cf\u25cb\u25aa\u25ab]", " ", text)
+    cleaned = cleaned.replace("&amp;", "&")
+
+    # Fix LaTeX kerning splits
+    kerning_replacements = [
+        (r"GHOSAR\s*W\s*ADE", "GHOSARWADE"),
+        (r"B\.?\s*T\s*ech", "B.Tech"),
+        (r"F\s+ull-Stack", "Full-Stack"),
+        (r"T\s+echnology", "Technology"),
+        (r"UA\s+V", "UAV"),
+        (r"CGP\s+A", "CGPA"),
+        (r"F\s+AISS", "FAISS"),
+        (r"W\s+ebSocket", "WebSocket"),
+        (r"\bW\s+eb\b", "Web"),
+        (r"\bT\s+ools\b", "Tools"),
+        (r"\bT\s+rack\b", "Track"),
+        (r"\bT\s+rue\b", "True"),
+        (r"QLoR\s*A", "QLoRA"),
+        (r"imple-\s*\n\s*mentation", "implementation"),
+        (r"architec-\s*\n\s*ture", "architecture"),
+    ]
+    for pattern, rep in kerning_replacements:
+        cleaned = re.sub(pattern, rep, cleaned, flags=re.IGNORECASE)
+
+    return cleaned
+
 class CareerMemoryManager:
     def __init__(self):
         self.user_id = "default_user"
@@ -22,6 +53,23 @@ class CareerMemoryManager:
 
     def _init_memory_store(self):
         if settings.is_nebius_configured and not self._qdrant_disabled:
+            # Fast probe to prevent blocking when Nebius embedding API is slow or unreachable
+            try:
+                import urllib.request
+                req = urllib.request.Request(
+                    settings.NEBIUS_BASE_URL,
+                    headers={"User-Agent": "CareerOrbit/1.0"}
+                )
+                with urllib.request.urlopen(req, timeout=1.5):
+                    pass
+            except Exception as probe_err:
+                # If cannot reach Nebius within 1.5s, fall back immediately to high-speed native vault
+                logger.info(f"Nebius endpoint fast probe ({probe_err}); operating native semantic SQLite memory vault.")
+                self._qdrant_disabled = True
+                self._mem0 = None
+                self._ensure_fallback_table()
+                return
+
             try:
                 from mem0 import Memory
                 qdrant_path = str(settings.STORAGE_DIR / "qdrant_4096")
@@ -35,6 +83,8 @@ class CareerMemoryManager:
                             "temperature": 0.0,
                             "api_key": settings.NEBIUS_API_KEY,
                             "openai_base_url": settings.NEBIUS_BASE_URL,
+                            "timeout": 4.0,
+                            "max_retries": 0,
                         }
                     },
                     "embedder": {
@@ -44,6 +94,8 @@ class CareerMemoryManager:
                             "api_key": settings.NEBIUS_API_KEY,
                             "openai_base_url": settings.NEBIUS_BASE_URL,
                             "embedding_dims": 4096,
+                            "timeout": 4.0,
+                            "max_retries": 0,
                         }
                     },
                     "vector_store": {
@@ -135,15 +187,15 @@ class CareerMemoryManager:
 
     def _classify_fact_category(self, text: str) -> str:
         t = text.lower()
-        if any(w in t for w in ["intern", "experience", "work", "worked", "company", "role"]):
+        if any(w in t for w in ["research software developer", "batterytrust", "founder", "prasunethon", "intern", "experience", "worked", "faculty"]):
             return "INTERNSHIP"
-        elif any(w in t for w in ["built", "developed", "project", "repo", "system", "engine", "agent", "created"]):
-            return "PROJECT"
-        elif any(w in t for w in ["reduced", "increased", "latency", "rps", "metrics", "%", "boosted", "optimized"]):
+        elif any(w in t for w in ["%", "mae", "189,569", "3,447", "8.69", "0.86", "1,162", "latency", "rps", "predictions/s"]):
             return "METRIC"
-        elif any(w in t for w in ["python", "pytorch", "fastapi", "react", "rust", "docker", "c++", "sql"]):
+        elif any(w in t for w in ["b.tech", "cgpa", "degree", "education", "coursework", "iiit dharwad"]):
+            return "EDUCATION"
+        elif any(w in t for w in ["python", "pytorch", "fastapi", "react", "rust", "docker", "c++", "sql", "kotlin", "java", "langgraph", "bullmq"]):
             return "SKILL"
-        return "GENERAL"
+        return "PROJECT"
 
     def search_memory(self, query: str, user_id: str = "default_user", limit: int = 10) -> List[Dict[str, Any]]:
         """Search memory for relevant projects, skills, and metrics."""
@@ -243,26 +295,64 @@ class CareerMemoryManager:
             conn.close()
 
     def extract_and_ingest_text(self, text: str, source_name: str, user_id: str = "default_user") -> List[Dict[str, Any]]:
-        """Splits resume or document text into semantic bullet points and stores them."""
-        # 1. Ingest full text into Mem0 in a single fast call (extracts all facts at once)
+        """Cleans, joins wrapped lines into complete sentences, and stores meaningful atomic facts."""
+        cleaned_text = clean_extracted_pdf_text(text)
+
+        # Ingest full cleaned text into Mem0 in a single fast call
         if self._mem0 and not self._qdrant_disabled:
             try:
-                self._mem0.add(text, user_id=user_id, metadata={"source": source_name})
+                self._mem0.add(cleaned_text, user_id=user_id, metadata={"source": source_name})
             except Exception as e:
                 logger.warning(f"Mem0 live store note: {e}. Using native semantic vault.")
                 self._qdrant_disabled = True
                 self._mem0 = None
 
-        # 2. Extract lines for local atomic memory cards and semantic vault
-        lines = [line.strip() for line in re.split(r"\n+|\u2022|\*", text) if len(line.strip()) > 15]
-        ingested = []
-        for line in lines:
-            if re.match(r"^(page \d+|resume|curriculum vitae|phone|email)$", line.lower()):
+        # Stitch wrapped PDF lines into full statements
+        raw_lines = [l.strip() for l in cleaned_text.splitlines() if l.strip()]
+        stitched_bullets: List[str] = []
+        current_bullet = ""
+
+        for line in raw_lines:
+            # Skip noise lines: table of contents with 4+ dots, page numbers, generic headers
+            if re.search(r"(\.\s*){4,}", line) or re.search(r"\.{4,}", line):
                 continue
-            cat = self._classify_fact_category(line)
-            mem_id = self._save_to_local_store(line, user_id, cat, source_name, {})
-            ingested.append({"id": mem_id, "category": cat, "content": line, "memory": line})
-            
+            if re.match(r"^(page \d+|resume|curriculum vitae|identity & education|technical skills|key projects|achievements & research|complete profile export|how you like to work|other work & plans)$", line.lower()):
+                continue
+
+            # If line starts with a dash or bullet, start a new bullet
+            is_bullet_start = bool(re.match(r"^[-–—*•]\s+", line))
+            clean_l = re.sub(r"^[-–—*•]\s+", "", line).strip()
+
+            if is_bullet_start or not current_bullet:
+                if current_bullet and len(current_bullet) >= 28:
+                    stitched_bullets.append(current_bullet)
+                current_bullet = clean_l
+            else:
+                # Check if previous line ended without sentence punctuation and this line continues it
+                if not current_bullet.endswith((".", ";", ":", "!", "?", ")")) and (clean_l[0].islower() or clean_l.startswith(("and", "with", "using", "for", "in", "to", "across", "by"))):
+                    current_bullet = f"{current_bullet} {clean_l}"
+                else:
+                    if len(current_bullet) >= 28:
+                        stitched_bullets.append(current_bullet)
+                    current_bullet = clean_l
+
+        if current_bullet and len(current_bullet) >= 28:
+            stitched_bullets.append(current_bullet)
+
+        # Deduplicate facts by normalized content
+        seen_hashes = set()
+        ingested = []
+
+        for bullet in stitched_bullets:
+            norm_hash = re.sub(r"\W+", "", bullet.lower())
+            if not norm_hash or norm_hash in seen_hashes:
+                continue
+            seen_hashes.add(norm_hash)
+
+            cat = self._classify_fact_category(bullet)
+            mem_id = self._save_to_local_store(bullet, user_id, cat, source_name, {})
+            ingested.append({"id": mem_id, "category": cat, "content": bullet, "memory": bullet})
+
         return ingested
 
 memory_manager = CareerMemoryManager()

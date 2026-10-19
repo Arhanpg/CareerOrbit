@@ -83,14 +83,17 @@ def trigger_stage_application(payload: StageApplicationRequest):
         }
 
     profile = get_candidate_constraints(payload.user_id) or {
-        "full_name": "Aman Sharma",
-        "email": "aman.sharma28@example.com",
-        "phone": "+91 9876543210",
-        "degree": "B.Tech",
+        "full_name": "Arhan Praveen Ghosarwade",
+        "email": "arhanghosarwade05@gmail.com",
+        "phone": "+91 6366616225",
+        "institution": "Indian Institute of Information Technology (IIIT) Dharwad",
+        "current_location": "Dharwad, Karnataka, India",
+        "degree": "B.Tech in Computer Science and Engineering",
         "graduation_batch": 2028,
-        "current_academic_year": "3rd Year",
-        "github_url": "https://github.com/amansharma2028",
-        "linkedin_url": "https://linkedin.com/in/amansharma2028"
+        "current_academic_year": "3rd Year (2024 – 2028)",
+        "cgpa": 8.69,
+        "github_url": "https://github.com/Arhanpg",
+        "linkedin_url": "https://www.linkedin.com/in/arhan-ghosarwade-78bb16324"
     }
 
     memories = memory_manager.search_memory(
@@ -128,6 +131,38 @@ def get_staged_screenshot(app_id: str):
             raise HTTPException(status_code=404, detail="Screenshot not available.")
 
     return FileResponse(path=screenshot_path, media_type="image/png")
+
+@router.get("/applications/{app_id}/email-preview", response_class=HTMLResponse)
+def get_approval_email_preview(app_id: str):
+    """
+    Renders the exact cryptographic HTML approval email dispatched for this application.
+    Enables instant in-browser inspection on cloud deployments where outbound SMTP port 587 is blocked.
+    """
+    app = get_application(app_id)
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found.")
+
+    draft_path = settings.STORAGE_DIR / "emails" / f"approval_{app_id}.html"
+    if draft_path.exists():
+        return HTMLResponse(content=draft_path.read_text(encoding="utf-8"))
+
+    # Dynamically generate HTML approval email if not cached on disk
+    from backend.browser_agent.hitl_mailer import generate_hitl_tokens, build_apple_light_email_html
+    tokens = generate_hitl_tokens(app_id, user_id="default_user")
+    job_details = {
+        "company": app.get("company", "Company"),
+        "role_title": app.get("role_title", "Role"),
+        "portal_url": app.get("portal_url", "#"),
+        "match_score": 96,
+        "location": "Dharwad / Remote / Bangalore"
+    }
+    html = build_apple_light_email_html(
+        job_details=job_details,
+        tokens=tokens,
+        has_pdf=bool(app.get("tailored_pdf_path")),
+        has_screenshot=bool(app.get("staged_screenshot_path"))
+    )
+    return HTMLResponse(content=html)
 
 def _execute_decision(token: str) -> Dict[str, Any]:
     """Helper to verify token, check replay, and execute action."""
@@ -338,11 +373,17 @@ def improve_and_restage_application(app_id: str, payload: ImproveApplicationRequ
     )
 
     profile = get_candidate_constraints(payload.user_id) or {
-        "full_name": "Aman Sharma",
-        "email": "aman.sharma28@example.com",
-        "phone": "+91 9876543210",
-        "degree": "B.Tech",
-        "graduation_batch": 2028
+        "full_name": "Arhan Praveen Ghosarwade",
+        "email": "arhanghosarwade05@gmail.com",
+        "phone": "+91 6366616225",
+        "institution": "Indian Institute of Information Technology (IIIT) Dharwad",
+        "current_location": "Dharwad, Karnataka, India",
+        "degree": "B.Tech in Computer Science and Engineering",
+        "graduation_batch": 2028,
+        "current_academic_year": "3rd Year (2024 – 2028)",
+        "cgpa": 8.69,
+        "github_url": "https://github.com/Arhanpg",
+        "linkedin_url": "https://www.linkedin.com/in/arhan-ghosarwade-78bb16324"
     }
 
     job_record = {

@@ -5,8 +5,21 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger("careerorbit.ats_readers")
 
+STUDENT_ROLE_KEYWORDS = [
+    "intern", "internship", "university", "new grad", "graduate",
+    "early career", "fellow", "apprentice", "junior", "associate",
+    "2027", "2028", "campus", "trainee", "co-op", "coop"
+]
+
+SENIOR_EXCLUDE_KEYWORDS = [
+    "manager", "director", "vp", "vice president", "head of",
+    "principal", "staff", "lead", "senior", "sr.", "sr ",
+    "architect", "distinguished", "account executive", "sales",
+    "counsel", "legal", "tax", "recruiter", "accountant"
+]
+
 def fetch_greenhouse_jobs(board_token: str) -> List[Dict[str, Any]]:
-    """Fetch public job listings directly via Greenhouse JSON API."""
+    """Fetch public job listings directly via Greenhouse JSON API filtered for students & interns."""
     url = f"https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs"
     jobs = []
     try:
@@ -15,15 +28,21 @@ def fetch_greenhouse_jobs(board_token: str) -> List[Dict[str, Any]]:
             if resp.status_code == 200:
                 data = resp.json()
                 for item in data.get("jobs", []):
-                    jobs.append({
-                        "id": f"gh_{item.get('id', uuid.uuid4().hex[:8])}",
-                        "source": f"greenhouse_{board_token}",
-                        "title": item.get("title", "Software Engineer"),
-                        "company": board_token.capitalize(),
-                        "location": item.get("location", {}).get("name", "Remote / India"),
-                        "url": item.get("absolute_url", ""),
-                        "description": item.get("content", "")
-                    })
+                    title = item.get("title", "")
+                    title_lower = title.lower()
+                    if any(k in title_lower for k in SENIOR_EXCLUDE_KEYWORDS):
+                        continue
+                    content = item.get("content", "").lower()
+                    if any(k in title_lower or k in content for k in STUDENT_ROLE_KEYWORDS):
+                        jobs.append({
+                            "id": f"gh_{item.get('id', uuid.uuid4().hex[:8])}",
+                            "source": f"greenhouse_{board_token}",
+                            "title": title,
+                            "company": board_token.capitalize(),
+                            "location": item.get("location", {}).get("name", "Remote / India"),
+                            "url": item.get("absolute_url", ""),
+                            "description": item.get("content", "")
+                        })
     except Exception:
         pass
     return jobs

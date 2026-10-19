@@ -47,14 +47,26 @@ def evaluate_batch_2028_eligibility(
             "rejection_reason": "Unpaid training scam requiring registration or training fee"
         }
 
-    # Rule 2: Senior / High YOE
-    if any(k in desc_lower or k in title_lower for k in ["5+ years", "5 years", "3-5 years", "senior software engineer", "lead architect"]):
+    # Rule 2: Senior / High YOE / Non-Student Role Rejection
+    senior_title_words = [
+        "manager", "director", "vp", "vice president", "head of",
+        "principal", "staff", "lead", "senior", "sr.", "sr ",
+        "architect", "distinguished", "account executive", "sales",
+        "recruiter", "counsel", "legal", "tax", "accountant",
+        "controller", "therapist", "nurse", "driver"
+    ]
+    high_yoe_phrases = [
+        "3+ years", "4+ years", "5+ years", "6+ years", "7+ years", "8+ years", "10+ years",
+        "3-5 years", "5-7 years", "7-10 years", "minimum 3 years", "minimum 4 years",
+        "minimum 5 years", "3 to 5 years", "5 to 8 years"
+    ]
+    if any(k in title_lower for k in senior_title_words) or any(k in desc_lower for k in high_yoe_phrases):
         return {
             "is_eligible": False,
-            "match_score": 15,
+            "match_score": 10,
             "role_category": "SDE",
             "matched_skills": [],
-            "rejection_reason": "Requires senior 2+ years full-time experience; candidate is 3rd-year B.Tech"
+            "rejection_reason": "Senior/Manager role requiring 3+ years experience; strictly ineligible for 3rd-year B.Tech intern cohort"
         }
 
     # Rule 3: Past batch only

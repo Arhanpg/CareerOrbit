@@ -217,7 +217,7 @@ def send_approval_email(
                 part["Content-Disposition"] = f'attachment; filename="{Path(screenshot_path).name}"'
                 msg.attach(part)
 
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=3.0) as server:
                 server.login(settings.SMTP_EMAIL, settings.SMTP_APP_PASSWORD)
                 server.sendmail(settings.SMTP_EMAIL, [to_email], msg.as_string())
             smtp_sent = True

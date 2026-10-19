@@ -75,7 +75,7 @@ export default function CalendarPage() {
     if (simulationPreset === "msft_interview") {
       payload = {
         subject: "Microsoft: Technical Interview Invitation (B.Tech Intern 2028)",
-        body: "Hello Aman, We are pleased to invite you for your 45-minute round 1 technical interview on distributed algorithms and data structures. Meeting Link: https://teams.microsoft.com/l/meetup-join/msft-intern-2028",
+        body: "Hello Arhan, We are pleased to invite you for your 45-minute round 1 technical interview on distributed algorithms and data structures. Meeting Link: https://teams.microsoft.com/l/meetup-join/msft-intern-2028",
         sender: "interviews@microsoft.com"
       };
     } else if (simulationPreset === "adobe_oa") {
@@ -87,7 +87,7 @@ export default function CalendarPage() {
     } else if (simulationPreset === "ambiguous_next_week") {
       payload = {
         subject: "Google Careers: Internship Update — Next Steps",
-        body: "Hi Aman, We reviewed your application for the 2028 Summer Internship. We would like to schedule a 45-minute interview sometime next week. We will follow up soon with specific available times.",
+        body: "Hi Arhan, We reviewed your application for the 2028 Summer Internship. We would like to schedule a 45-minute interview sometime next week. We will follow up soon with specific available times.",
         sender: "recruiting-team@google.com"
       };
     }

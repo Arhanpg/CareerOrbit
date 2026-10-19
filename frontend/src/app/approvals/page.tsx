@@ -17,7 +17,8 @@ import {
   Eye,
   Check,
   X,
-  MessageSquare
+  MessageSquare,
+  Mail
 } from "lucide-react";
 import { API_BASE_URL, getApiUrl } from "@/lib/api";
 
@@ -43,6 +44,7 @@ export default function ApprovalsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [improveText, setImproveText] = useState("");
   const [showImproveModal, setShowImproveModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Fetch applications
@@ -370,14 +372,22 @@ export default function ApprovalsPage() {
                       <Eye className="w-3.5 h-3.5 text-[#0071E3]" />
                       Pre-Filled Form Verification Screenshot
                     </span>
-                    <a
-                      href={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/screenshot`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-[#0071E3] hover:underline flex items-center gap-1"
-                    >
-                      Open Full Size <ExternalLink className="w-3 h-3" />
-                    </a>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShowEmailModal(true)}
+                        className="text-xs text-[#0071E3] hover:underline flex items-center gap-1 font-semibold"
+                      >
+                        <Mail className="w-3 h-3" /> View Approval Email
+                      </button>
+                      <a
+                        href={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/screenshot`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-[#86868B] hover:text-[#1D1D1F] flex items-center gap-1"
+                      >
+                        Full Size <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
 
                   <div className="rounded-xl overflow-hidden border border-black/[0.08] bg-[#F5F5F7] max-h-72 flex items-center justify-center">
@@ -399,16 +409,16 @@ export default function ApprovalsPage() {
                   </span>
                   <div className="grid grid-cols-2 gap-2 text-[#515154] pt-1">
                     <div>
-                      <span className="text-[#86868B]">Full Name:</span> {selectedApp.cached_dom_actions?.full_name || "Aman Sharma"}
+                      <span className="text-[#86868B]">Full Name:</span> {selectedApp.cached_dom_actions?.full_name || "Arhan Praveen Ghosarwade"}
                     </div>
                     <div>
-                      <span className="text-[#86868B]">Graduation:</span> {selectedApp.cached_dom_actions?.graduation_year || "2028 (Verified)"}
+                      <span className="text-[#86868B]">Graduation:</span> {selectedApp.cached_dom_actions?.graduation_year || "2028 (IIIT Dharwad)"}
                     </div>
                     <div>
-                      <span className="text-[#86868B]">Email:</span> {selectedApp.cached_dom_actions?.email || "aman.sharma28@example.com"}
+                      <span className="text-[#86868B]">Email:</span> {selectedApp.cached_dom_actions?.email || "arhanghosarwade05@gmail.com"}
                     </div>
                     <div>
-                      <span className="text-[#86868B]">Phone:</span> {selectedApp.cached_dom_actions?.phone || "+91 9876543210"}
+                      <span className="text-[#86868B]">Phone:</span> {selectedApp.cached_dom_actions?.phone || "+91 6366616225"}
                     </div>
                   </div>
                   {selectedApp.tailored_pdf_path && (
@@ -434,9 +444,17 @@ export default function ApprovalsPage() {
                     </button>
 
                     <button
+                      onClick={() => setShowEmailModal(true)}
+                      className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                    >
+                      <Mail className="w-4 h-4 text-[#0071E3]" />
+                      View Email
+                    </button>
+
+                    <button
                       onClick={() => setShowImproveModal(true)}
                       disabled={actionLoading}
-                      className="w-full sm:w-auto py-3 px-5 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto py-3 px-4 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/[0.1] text-[#1D1D1F] font-semibold text-sm transition-all flex items-center justify-center gap-2"
                     >
                       <RotateCcw className="w-4 h-4 text-[#86868B]" />
                       Improve
@@ -513,6 +531,65 @@ export default function ApprovalsPage() {
                 className="px-5 py-2 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-semibold shadow-sm shadow-blue-500/25 disabled:opacity-50 flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5" /> Re-Compile &amp; Re-Stage
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Preview Modal */}
+      {showEmailModal && selectedApp && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-black/[0.08] flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#0071E3]/10 flex items-center justify-center text-[#0071E3]">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1D1D1F]">
+                    Cryptographic HITL Approval Email
+                  </h3>
+                  <span className="text-[11px] text-[#86868B]">
+                    {selectedApp.company} &bull; 24-Hour Expiration Action Tokens
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/email-preview`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-[#0071E3] hover:underline flex items-center gap-1 font-medium"
+                >
+                  Open in New Window <ExternalLink className="w-3 h-3" />
+                </a>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="text-[#86868B] hover:text-[#1D1D1F] p-1 rounded-full hover:bg-[#F5F5F7]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden my-4 rounded-2xl border border-black/[0.08] bg-[#F5F5F7]">
+              <iframe
+                src={`${API_BASE_URL}/api/v1/applications/${selectedApp.id}/email-preview`}
+                className="w-full h-[55vh] border-0"
+                title="Approval Email Preview"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-black/[0.06]">
+              <span className="text-[11px] text-[#86868B]">
+                Interactive HTML preview allows testing Approve, Improve &amp; Reject flows directly in cloud sandbox.
+              </span>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="px-5 py-2 rounded-full bg-[#F5F5F7] hover:bg-[#E8E8ED] text-xs font-semibold text-[#1D1D1F]"
+              >
+                Close Preview
               </button>
             </div>
           </div>

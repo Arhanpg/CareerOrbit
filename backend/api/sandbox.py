@@ -24,8 +24,8 @@ router = APIRouter(prefix="/api/v1/sandbox", tags=["60-Second Judge Sandbox"])
 
 class SandboxRunRequest(BaseModel):
     user_id: Optional[str] = "judge_sandbox_user"
-    candidate_name: Optional[str] = "Aman Sharma"
-    recipient_email: Optional[str] = "aman.sharma28@example.com"
+    candidate_name: Optional[str] = "Arhan Praveen Ghosarwade"
+    recipient_email: Optional[str] = "arhanghosarwade05@gmail.com"
 
 @router.post("/run-60s-loop")
 def run_60s_judge_sandbox_loop(payload: Optional[SandboxRunRequest] = None):
@@ -37,22 +37,23 @@ def run_60s_judge_sandbox_loop(payload: Optional[SandboxRunRequest] = None):
     telemetry = []
 
     user_id = payload.user_id if payload else "judge_sandbox_user"
-    cand_name = payload.candidate_name if payload else "Aman Sharma"
-    cand_email = payload.recipient_email if payload else "aman.sharma28@example.com"
+    cand_name = payload.candidate_name if payload else "Arhan Praveen Ghosarwade"
+    cand_email = payload.recipient_email if payload else "arhanghosarwade05@gmail.com"
 
     # Step 1: Preload Canonical B.Tech 2028 Profile
     step1_start = time.time()
     profile = {
         "full_name": cand_name,
         "email": cand_email,
-        "phone": "+91 9876543210",
-        "current_location": "Bangalore, India",
-        "degree": "B.Tech",
+        "phone": "+91 6366616225",
+        "institution": "Indian Institute of Information Technology (IIIT) Dharwad",
+        "current_location": "Dharwad, Karnataka, India",
+        "degree": "B.Tech in Computer Science and Engineering",
         "graduation_batch": 2028,
-        "current_academic_year": "3rd Year",
-        "cgpa": 8.95,
-        "github_url": "https://github.com/amansharma2028",
-        "linkedin_url": "https://linkedin.com/in/amansharma2028"
+        "current_academic_year": "3rd Year (2024 – 2028)",
+        "cgpa": 8.69,
+        "github_url": "https://github.com/Arhanpg",
+        "linkedin_url": "https://www.linkedin.com/in/arhan-ghosarwade-78bb16324"
     }
     save_candidate_constraints(user_id, profile)
     telemetry.append({
@@ -143,7 +144,7 @@ def run_60s_judge_sandbox_loop(payload: Optional[SandboxRunRequest] = None):
     # Step 6: Recruiter OA Email Detection & Google Calendar Sync
     step6_start = time.time()
     mock_email = (
-        "Dear Aman, Thank you for applying to Adobe Systems. "
+        "Dear Arhan, Thank you for applying to Adobe Systems. "
         "Please complete your 90-minute online coding assessment on HackerRank within 48 hours: "
         "https://www.hackerrank.com/adobe-aiml-intern-2028"
     )

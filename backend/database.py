@@ -197,9 +197,114 @@ def init_db():
             )
         """)
 
+        # Run one-time idempotent database cleanup & canonical profile sync
+        run_startup_cleanup(cursor)
+
         conn.commit()
         conn.close()
         logger.info(f"CareerOrbit Database initialized at {settings.SQLITE_DB_PATH}")
+
+def run_startup_cleanup(cursor: sqlite3.Cursor):
+    """Executes idempotent database cleanup, canonical profile synchronization, and senior role purging."""
+    try:
+        # 1. Candidate Profile Migration to Arhan's verified canonical details
+        cursor.execute("SELECT id, data_json FROM candidate_profile WHERE id = 'default_user'")
+        row = cursor.fetchone()
+        canonical_profile = {
+            "full_name": "Arhan Praveen Ghosarwade",
+            "email": "arhanghosarwade05@gmail.com",
+            "phone": "+91 6366616225",
+            "institution": "Indian Institute of Information Technology (IIIT) Dharwad",
+            "degree": "B.Tech in Computer Science and Engineering",
+            "graduation_batch": 2028,
+            "current_academic_year": "3rd Year (2024 – 2028)",
+            "cgpa": 8.69,
+            "current_location": "Dharwad, Karnataka, India",
+            "github_url": "https://github.com/Arhanpg",
+            "linkedin_url": "https://www.linkedin.com/in/arhan-ghosarwade-78bb16324",
+            "portfolio_url": "https://github.com/Arhanpg",
+            "address_line": "IIIT Dharwad Campus, Ittigatti Road",
+            "postal_code": "580009",
+            "target_roles": ["SDE Intern", "AI/ML Intern", "Backend Developer", "GenAI / Agentic AI", "Hackathon"],
+            "allowed_locations": ["India", "Remote", "Bangalore", "Hyderabad", "Pune", "Dharwad"]
+        }
+        if not row:
+            cursor.execute(
+                "INSERT INTO candidate_profile (id, data_json, updated_at) VALUES ('default_user', ?, CURRENT_TIMESTAMP)",
+                (json.dumps(canonical_profile),)
+            )
+        else:
+            try:
+                curr = json.loads(row["data_json"])
+                inst = curr.get("institution", "")
+                name = curr.get("full_name", "")
+                phone = curr.get("phone", "")
+                if not inst or "national institute" in inst.lower() or name == "Aman Sharma" or "9876543210" in phone or phone == "6366616225":
+                    curr.update(canonical_profile)
+                    cursor.execute(
+                        "UPDATE candidate_profile SET data_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 'default_user'",
+                        (json.dumps(curr),)
+                    )
+            except Exception:
+                pass
+
+        # 2. Senior / Manager / High-YOE Jobs Purge from discovered_jobs
+        senior_keywords = [
+            "%manager%", "%director%", "%staff%", "%principal%", "%head of%",
+            "%lead%", "%senior%", "%sr.%", "%sr %", "%architect%", "%sales%",
+            "%counsel%", "%account executive%", "%recruiter%"
+        ]
+        for kw in senior_keywords:
+            cursor.execute("""
+                UPDATE discovered_jobs
+                SET is_eligible = 0, rejection_reason = 'Senior/Manager full-time role; candidate is 3rd-year B.Tech intern'
+                WHERE LOWER(title) LIKE ?
+            """, (kw,))
+
+        # Clear out old tailored_yaml with NIT placeholders so fresh IIIT Dharwad resumes are generated
+        cursor.execute("""
+            UPDATE discovered_jobs
+            SET tailored_yaml = NULL
+            WHERE tailored_yaml LIKE '%National Institute of Technology%'
+               OR tailored_yaml LIKE '%098765 43210%'
+               OR tailored_yaml LIKE '%Aman Sharma%'
+        """)
+
+        # 3. Clean up empty/bogus memory conflicts
+        cursor.execute("""
+            DELETE FROM memory_conflicts
+            WHERE incoming_value IS NULL 
+               OR incoming_value = '' 
+               OR incoming_value = 'None' 
+               OR incoming_value = existing_value 
+               OR existing_value IS NULL
+        """)
+
+        # 4. Clean up noisy table-of-contents or short header lines in atomic_memories
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS atomic_memories (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                content TEXT NOT NULL,
+                category TEXT NOT NULL,
+                source TEXT NOT NULL,
+                metadata_json TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            DELETE FROM atomic_memories
+            WHERE content LIKE '%. . . .%'
+               OR content LIKE '%\uf0b7%'
+               OR length(trim(content)) < 25
+               OR lower(content) LIKE 'page %'
+               OR lower(content) LIKE 'identity & education%'
+               OR lower(content) LIKE 'complete profile export%'
+               OR lower(content) LIKE 'table of contents%'
+        """)
+
+    except Exception as e:
+        logger.warning(f"Database startup cleanup notice: {e}")
 
 def save_candidate_constraints(profile_id: str, constraints_dict: Dict[str, Any]):
     ensure_db()

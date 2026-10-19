@@ -22,21 +22,22 @@ import { getApiUrl } from "@/lib/api";
 export default function MemoryVaultPage() {
   // Constraints form state
   const [profile, setProfile] = useState<any>({
-    full_name: "Aman Sharma",
-    email: "aman.sharma28@example.com",
-    phone: "+91 9876543210",
-    current_location: "India",
-    degree: "B.Tech",
+    full_name: "Arhan Praveen Ghosarwade",
+    email: "arhanghosarwade05@gmail.com",
+    phone: "+91 6366616225",
+    institution: "Indian Institute of Information Technology (IIIT) Dharwad",
+    degree: "B.Tech in Computer Science and Engineering",
     graduation_batch: 2028,
-    current_academic_year: "3rd Year",
-    cgpa: 8.95,
-    target_roles: ["SDE Intern", "AI/ML Intern", "Backend Developer", "Hackathon"],
+    current_academic_year: "3rd Year (2024 – 2028)",
+    cgpa: 8.69,
+    current_location: "Dharwad, Karnataka, India",
+    target_roles: ["AI/ML Intern", "GenAI / Agentic AI Intern", "SDE Backend Intern", "Full-Stack Developer"],
     allowed_locations: ["India", "Remote", "Bangalore", "Hyderabad", "Pune"],
-    github_url: "https://github.com/amansharma28",
-    linkedin_url: "https://linkedin.com/in/amansharma28",
-    portfolio_url: "https://amansharma.dev",
-    address_line: "Koramangala 4th Block, Bangalore",
-    postal_code: "560034"
+    github_url: "https://github.com/Arhanpg",
+    linkedin_url: "https://www.linkedin.com/in/arhan-ghosarwade-78bb16324",
+    portfolio_url: "https://github.com/Arhanpg",
+    address_line: "IIIT Dharwad Campus, Ittigatti Road",
+    postal_code: "580009"
   });
 
   const [memories, setMemories] = useState<any[]>([]);
@@ -279,6 +280,34 @@ export default function MemoryVaultPage() {
                   type="email"
                   value={profile.email}
                   onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/[0.08] focus:border-[#0071E3] focus:outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-[#86868B] uppercase tracking-wider mb-1">
+                  Phone (with Country Code)
+                </label>
+                <input
+                  type="tel"
+                  value={profile.phone || "+91 6366616225"}
+                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  placeholder="+91 6366616225"
+                  className="w-full px-3 py-2 rounded-xl border border-black/[0.08] focus:border-[#0071E3] focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#86868B] uppercase tracking-wider mb-1">
+                  College / Institution
+                </label>
+                <input
+                  type="text"
+                  value={profile.institution || "Indian Institute of Information Technology (IIIT) Dharwad"}
+                  onChange={(e) => setProfile({ ...profile, institution: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-black/[0.08] focus:border-[#0071E3] focus:outline-none"
                   required
                 />

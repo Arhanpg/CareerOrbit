@@ -42,15 +42,15 @@ export default function OverviewPage() {
         } else {
           // Fallback initial state
           setProfile({
-            full_name: "Aman Sharma",
-            degree: "B.Tech",
+            full_name: "Arhan Praveen Ghosarwade",
+            degree: "B.Tech in Computer Science and Engineering",
             graduation_batch: 2028,
-            current_academic_year: "3rd Year",
-            cgpa: 8.95,
-            current_location: "India",
-            target_roles: ["SDE Intern", "AI/ML Intern", "Backend Developer", "Hackathons"],
-            github_url: "https://github.com/amansharma28",
-            linkedin_url: "https://linkedin.com/in/amansharma28"
+            current_academic_year: "3rd Year (2024 – 2028)",
+            cgpa: 8.69,
+            current_location: "Dharwad, Karnataka, India",
+            target_roles: ["SDE Intern", "AI/ML Intern", "Backend Developer", "GenAI / Agentic AI", "Hackathons"],
+            github_url: "https://github.com/Arhanpg",
+            linkedin_url: "https://www.linkedin.com/in/arhan-ghosarwade-78bb16324"
           });
         }
 
@@ -90,7 +90,7 @@ export default function OverviewPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#1D1D1F]">
-              Welcome back, {profile?.full_name || "Aman Sharma"}
+              Welcome back, {profile?.full_name || "Arhan Praveen Ghosarwade"}
             </h1>
             <p className="text-[15px] text-[#86868B] max-w-2xl leading-relaxed">
               CareerOrbit is running 24/7 in the cloud—discovering verified internships on Naukri, LinkedIn, Unstop &amp; Big Tech portals, dynamically tailoring ATS-proof RenderCV resumes, and preparing staged applications behind your email approval gate.

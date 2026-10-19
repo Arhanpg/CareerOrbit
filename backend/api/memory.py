@@ -98,18 +98,23 @@ async def upload_resume_files(
             """, (doc_id, file.filename, content_hash, len(contents), len(ingested_facts)))
 
         # Contradiction Detection (FR-008, Scenario B)
-        # Check for batch discrepancy
-        batch_match = re.search(r"\b(202[4-9]|203[0-2])\b", extracted_text)
+        # Check specifically for degree/graduation batch discrepancy (avoid matching project years like 2025)
+        batch_match = re.search(r"(?:batch|graduat(?:ion|ing)|class)\s*(?:of)?\s*[:\-]?\s*(202[4-9]|203[0-2])", extracted_text, flags=re.IGNORECASE)
+        if not batch_match:
+            batch_match = re.search(r"\bB\.?Tech[^\n\.\,]{0,40}\b(202[4-9]|203[0-2])\b", extracted_text, flags=re.IGNORECASE)
+
         if batch_match:
-            found_year = int(batch_match.group(1))
-            current_batch = current_profile.get("graduation_batch", 2028)
-            if found_year != current_batch and abs(found_year - current_batch) <= 3:
-                with db_transaction() as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        INSERT INTO memory_conflicts (id, field_name, existing_value, incoming_value, status, source_doc)
-                        VALUES (?, ?, ?, ?, 'PENDING', ?)
-                    """, (f"conf_{uuid.uuid4().hex[:8]}", "graduation_batch", str(current_batch), str(found_year), file.filename))
+            found_year_str = batch_match.group(1).strip()
+            if found_year_str:
+                found_year = int(found_year_str)
+                current_batch = current_profile.get("graduation_batch", 2028)
+                if found_year != current_batch and abs(found_year - current_batch) <= 3:
+                    with db_transaction() as conn:
+                        cursor = conn.cursor()
+                        cursor.execute("""
+                            INSERT INTO memory_conflicts (id, field_name, existing_value, incoming_value, status, source_doc)
+                            VALUES (?, ?, ?, ?, 'PENDING', ?)
+                        """, (f"conf_{uuid.uuid4().hex[:8]}", "graduation_batch", str(current_batch), str(found_year), file.filename))
 
         results.append({
             "doc_id": doc_id,

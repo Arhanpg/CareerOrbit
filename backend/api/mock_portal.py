@@ -121,17 +121,17 @@ MOCK_PORTAL_HTML = """<!DOCTYPE html>
     <form id="application-form" action="/mock-portals/adobe-aiml-intern-2028/submit" method="POST" enctype="multipart/form-data">
       <div class="form-group">
         <label for="full_name">Candidate Full Name *</label>
-        <input type="text" id="full_name" name="full_name" placeholder="e.g. Aman Sharma" required>
+        <input type="text" id="full_name" name="full_name" placeholder="e.g. Arhan Praveen Ghosarwade" required>
       </div>
 
       <div class="form-group">
         <label for="email">Email Address *</label>
-        <input type="email" id="email" name="email" placeholder="e.g. aman.sharma@example.com" required>
+        <input type="email" id="email" name="email" placeholder="e.g. arhanghosarwade05@gmail.com" required>
       </div>
 
       <div class="form-group">
         <label for="phone">Phone Number (+E.164) *</label>
-        <input type="text" id="phone" name="phone" placeholder="+91 9876543210" required>
+        <input type="text" id="phone" name="phone" placeholder="+91 6366616225" required>
       </div>
 
       <div class="form-group">

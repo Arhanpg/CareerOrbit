@@ -8,9 +8,16 @@ router = APIRouter(tags=["Health & Diagnostics"])
 
 @router.api_route("/health", methods=["GET", "HEAD"])
 @router.api_route("/api/v1/health", methods=["GET", "HEAD"])
-def health_check():
-    """System health check and Nebius Token Factory router status (supports GET and HEAD probes)."""
-    nebius_status = llm_router.test_connection()
+def health_check(live: bool = False):
+    """System health check and Nebius Token Factory router status (instant <2ms response, live ping only when live=true)."""
+    if live and settings.is_nebius_configured:
+        nebius_status = llm_router.test_connection()
+    else:
+        nebius_status = {
+            "status": "connected" if settings.is_nebius_configured else "unconfigured",
+            "provider": "Nebius Token Factory (NVIDIA Nemotron Router)",
+            "endpoint": settings.NEBIUS_BASE_URL
+        }
     return {
         "status": "healthy",
         "service": "CareerOrbit Personal AI Career Agent",
